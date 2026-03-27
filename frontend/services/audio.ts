@@ -23,10 +23,11 @@ export function speakText(text: string, language: string = "en"): void {
  */
 export function speakObjectDescription(
   objectName: string,
-  description: string
+  description: string,
+  languageCode: string = "en-US"
 ): void {
-  const speech = `This is a ${objectName}! ${description}`;
-  speakText(speech);
+  const speech = `${objectName}. ${description}`;
+  speakText(speech, languageCode);
 }
 
 /**

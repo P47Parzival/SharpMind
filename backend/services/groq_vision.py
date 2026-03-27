@@ -9,7 +9,7 @@ def get_groq_client() -> Groq:
     return Groq(api_key=settings.GROQ_API_KEY)
 
 
-async def detect_object(image_base64: str) -> dict:
+async def detect_object(image_base64: str, language: str = "English") -> dict:
     """
     Send an image to Groq Vision API to identify the object
     and generate a kid-friendly description.
@@ -17,14 +17,16 @@ async def detect_object(image_base64: str) -> dict:
     client = get_groq_client()
 
     # Build the prompt for kid-friendly output
-    prompt = """You are a friendly teacher for young children (ages 4-10). 
+    prompt = f"""You are a friendly teacher for young children (ages 4-10). 
 Look at this image and:
 1. Identify the main object in the image.
 2. Write a fun, simple, 2-3 sentence description that a kid would understand.
 3. Include one interesting fact about the object.
 
+IMPORTANT: You MUST write the 'object_name' and 'description' in {language}.
+
 Respond ONLY in this exact JSON format (no markdown, no code blocks):
-{"object_name": "name of the object", "description": "your kid-friendly description here"}
+{{"object_name": "name of the object in {language}", "description": "your kid-friendly description in {language}"}}
 """
 
     try:

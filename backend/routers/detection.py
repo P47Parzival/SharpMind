@@ -28,7 +28,7 @@ async def detect_object_endpoint(
     Returns the object name, kid-friendly description, and audio URL.
     """
     # Step 1: Identify object with Groq Vision
-    result = await detect_object(request.image_base64)
+    result = await detect_object(request.image_base64, request.language)
 
     object_name = result["object_name"]
     description = result["description"]

@@ -12,26 +12,27 @@ import { COLORS } from "../constants/app";
 import { speakObjectDescription, stopSpeaking } from "../services/audio";
 
 export default function ResultScreen() {
-  const { objectName, description } = useLocalSearchParams<{
+  const { objectName, description, languageCode } = useLocalSearchParams<{
     objectName: string;
     description: string;
+    languageCode: string;
   }>();
   const router = useRouter();
 
   // Auto-speak the description when the screen loads (device TTS)
   useEffect(() => {
     if (objectName && description) {
-      speakObjectDescription(objectName, description);
+      speakObjectDescription(objectName, description, languageCode || "en-US");
     }
 
     return () => {
       stopSpeaking();
     };
-  }, [objectName, description]);
+  }, [objectName, description, languageCode]);
 
   const handleSpeak = () => {
     if (objectName && description) {
-      speakObjectDescription(objectName, description);
+      speakObjectDescription(objectName, description, languageCode || "en-US");
     }
   };
 

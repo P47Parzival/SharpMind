@@ -5,6 +5,7 @@ from typing import Optional
 # --- Object Detection ---
 class DetectionRequest(BaseModel):
     image_base64: str
+    language: str = "English"
 
 
 class DetectionResponse(BaseModel):

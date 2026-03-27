@@ -13,11 +13,19 @@ import { SwitchCamera, Zap, ZapOff } from "lucide-react-native";
 import { COLORS } from "../../constants/app";
 import { api } from "../../services/api";
 
+const LANGUAGES = [
+  { name: "English", code: "en-US", emoji: "🇬🇧" },
+  { name: "Spanish", code: "es-ES", emoji: "🇪🇸" },
+  { name: "German", code: "de-DE", emoji: "🇩🇪" },
+  { name: "Hindi", code: "hi-IN", emoji: "🇮🇳" },
+];
+
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraType>("back");
   const [flash, setFlash] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
 
@@ -54,13 +62,14 @@ export default function CameraScreen() {
       });
 
       if (photo?.base64) {
-        const result = await api.detectObject(photo.base64);
+        const result = await api.detectObject(photo.base64, selectedLang.name);
         router.push({
           pathname: "/result",
           params: {
             objectName: result.object_name,
             description: result.description,
             audioUrl: result.audio_url || "",
+            languageCode: selectedLang.code,
           },
         });
       }
@@ -109,6 +118,23 @@ export default function CameraScreen() {
           >
             <SwitchCamera color="#FFFFFF" size={24} />
           </TouchableOpacity>
+        </View>
+
+        {/* Language Selector */}
+        <View style={styles.languageContainer}>
+          {LANGUAGES.map((lang) => (
+             <TouchableOpacity
+             key={lang.code}
+             style={[
+               styles.langBadge,
+               selectedLang.code === lang.code && styles.langBadgeActive,
+             ]}
+             onPress={() => setSelectedLang(lang)}
+             activeOpacity={0.8}
+           >
+             <Text style={styles.langEmoji}>{lang.emoji}</Text>
+           </TouchableOpacity>
+         ))}
         </View>
 
         {/* Camera frame guide */}
@@ -259,5 +285,27 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  languageContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 16,
+    zIndex: 10,
+  },
+  langBadge: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  langBadgeActive: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderColor: COLORS.primary,
+  },
+  langEmoji: {
+    fontSize: 24,
   },
 });

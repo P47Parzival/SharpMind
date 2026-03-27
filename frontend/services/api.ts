@@ -10,11 +10,11 @@ export const api = {
   /**
    * Detect an object from a base64-encoded image
    */
-  async detectObject(imageBase64: string) {
+  async detectObject(imageBase64: string, language: string = "English") {
     const response = await fetch(`${API_BASE_URL}/detect/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_base64: imageBase64 }),
+      body: JSON.stringify({ image_base64: imageBase64, language }),
     });
 
     if (!response.ok) {
