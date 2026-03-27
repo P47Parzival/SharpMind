@@ -67,3 +67,23 @@ async def get_user_stats(user_id: int, db: Session = Depends(get_db)):
         objects_detected=objects_detected,
         challenges_completed=challenges_completed,
     )
+
+from pydantic import BaseModel
+
+class DeductPointsRequest(BaseModel):
+    amount: int
+
+@router.post("/{user_id}/deduct")
+async def deduct_points(user_id: int, req: DeductPointsRequest, db: Session = Depends(get_db)):
+    """Deduct points from user for redemption."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.total_points < req.amount:
+        raise HTTPException(status_code=400, detail="Not enough points")
+        
+    user.total_points -= req.amount
+    db.commit()
+    db.refresh(user)
+    return {"status": "success", "new_total": user.total_points}

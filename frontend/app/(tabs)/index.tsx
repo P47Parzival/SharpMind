@@ -176,6 +176,23 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* Reedem Store */}
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => router.push("/redeem")}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#FFE5F1" }]}>
+            <Text style={{ fontSize: 32 }}>🎁</Text>
+          </View>
+          <View style={styles.actionText}>
+            <Text style={styles.actionTitle}>🛍️ Redeem Points</Text>
+            <Text style={styles.actionDescription}>
+              Exchange your points for awesome digital toys and treats!
+            </Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Tip of the Day */}
         <View style={styles.tipCard}>
           <Text style={styles.tipTitle}>💡 Did you know?</Text>

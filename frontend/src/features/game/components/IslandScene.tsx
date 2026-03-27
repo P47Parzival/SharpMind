@@ -305,22 +305,54 @@ function DynamicModel({ name }: { name: string }) {
 
 
 // ── Player Avatar & Compass ───────────────────────────────────────────────────
-function PlayerAvatar({ meshRef, target }: { meshRef: React.MutableRefObject<THREE.Group | null>; target: TargetObject }) {
+function PlayerAvatar({ meshRef, target, joystick }: { meshRef: React.MutableRefObject<THREE.Group | null>; target: TargetObject; joystick: React.MutableRefObject<{ dx: number; dz: number }> }) {
   const compassRef = useRef<THREE.Group>(null);
+  
+  // Limb refs for procedural animation
+  const leftLegRef  = useRef<THREE.Group>(null);
+  const rightLegRef = useRef<THREE.Group>(null);
+  const leftArmRef  = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
+  const bodyRef     = useRef<THREE.Group>(null);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
+    // 1. Compass rotation
     if (compassRef.current && meshRef.current) {
-      const dx = target.x - meshRef.current.position.x;
-      const dz = target.z - meshRef.current.position.z;
-      compassRef.current.rotation.y = Math.atan2(dx, dz);
+      const dxArrow = target.x - meshRef.current.position.x;
+      const dzArrow = target.z - meshRef.current.position.z;
+      compassRef.current.rotation.y = Math.atan2(dxArrow, dzArrow);
+    }
+
+    // 2. Walking animations
+    const { dx, dz } = joystick.current;
+    const isMoving = dx !== 0 || dz !== 0;
+    const t = clock.getElapsedTime() * 12; // Swing speed
+
+    if (isMoving) {
+      const swing = Math.sin(t) * 0.7; // 40 degrees swing roughly
+      if (leftLegRef.current)  leftLegRef.current.rotation.x  = swing;
+      if (rightLegRef.current) rightLegRef.current.rotation.x = -swing;
+      if (leftArmRef.current)  leftArmRef.current.rotation.x  = -swing;
+      if (rightArmRef.current) rightArmRef.current.rotation.x = swing;
+      // Slight vertical bobbing
+      if (bodyRef.current) bodyRef.current.position.y = Math.abs(Math.sin(t)) * 0.1;
+    } else {
+      // Return to idle stance smoothly
+      if (leftLegRef.current)  leftLegRef.current.rotation.x  = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, 0, 0.1);
+      if (rightLegRef.current) rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, 0, 0.1);
+      if (leftArmRef.current)  leftArmRef.current.rotation.x  = THREE.MathUtils.lerp(leftArmRef.current.rotation.x, 0, 0.1);
+      if (rightArmRef.current) rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, 0, 0.1);
+      // Gentle breathing effect
+      if (bodyRef.current) bodyRef.current.position.y = THREE.MathUtils.lerp(bodyRef.current.position.y, Math.sin(clock.getElapsedTime()*2) * 0.05, 0.1);
     }
   });
 
   return (
     <group ref={meshRef}>
-      <group ref={compassRef} position={[0, 0.2, 0]}>
+      {/* Compass Hologram ring */}
+      <group ref={compassRef} position={[0, 0.1, 0]}>
         <mesh position={[0, 0, 1.5]} rotation={[-Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.4, 1.2, 3]} />
+          <coneGeometry args={[0.3, 0.8, 4]} />
           <meshBasicMaterial color="#FFD700" />
         </mesh>
         <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -328,18 +360,92 @@ function PlayerAvatar({ meshRef, target }: { meshRef: React.MutableRefObject<THR
           <meshBasicMaterial color="#FFD700" transparent opacity={0.6} />
         </mesh>
       </group>
-      <mesh position={[0, 0.9, 0]} castShadow>
-        <capsuleGeometry args={[0.3, 0.8, 4, 8]} />
-        <meshLambertMaterial color="#4fc3f7" />
-      </mesh>
-      <mesh position={[0, 1.8, 0]} castShadow>
-        <sphereGeometry args={[0.25, 16, 16]} />
-        <meshLambertMaterial color="#fcd1b9" />
-      </mesh>
-      <mesh position={[0, 1.2, 0.3]}>
-        <boxGeometry args={[0.4, 0.5, 0.2]} />
-        <meshLambertMaterial color="#0288d1" />
-      </mesh>
+
+      {/* Boxy Skeleton */}
+      <group ref={bodyRef}>
+        
+        {/* Torso */}
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <boxGeometry args={[0.7, 1.0, 0.4]} />
+          <meshLambertMaterial color="#0288d1" /> {/* Blue shirt */}
+        </mesh>
+
+        {/* Head */}
+        <mesh position={[0, 2.05, 0]} castShadow>
+          <boxGeometry args={[0.6, 0.6, 0.6]} />
+          <meshLambertMaterial color="#ffccaa" /> {/* Skin */}
+        </mesh>
+        
+        {/* Hair block edge detailing */}
+        <mesh position={[0, 2.4, -0.05]} castShadow>
+          <boxGeometry args={[0.65, 0.2, 0.65]} />
+          <meshLambertMaterial color="#4e342e" /> {/* Brown hair */}
+        </mesh>
+        <mesh position={[0, 2.25, 0.25]} castShadow>
+          <boxGeometry args={[0.65, 0.15, 0.2]} />
+          <meshLambertMaterial color="#4e342e" />
+        </mesh>
+
+        {/* Simple Eyes */}
+        <mesh position={[-0.15, 2.1, 0.31]}>
+          <boxGeometry args={[0.1, 0.1, 0.05]} />
+          <meshBasicMaterial color="#111111" />
+        </mesh>
+        <mesh position={[0.15, 2.1, 0.31]}>
+          <boxGeometry args={[0.1, 0.1, 0.05]} />
+          <meshBasicMaterial color="#111111" />
+        </mesh>
+
+        {/* Left Arm Pivot (Shoulder) */}
+        <group ref={leftArmRef} position={[-0.5, 1.6, 0]}>
+          <mesh position={[0, -0.4, 0]} castShadow>
+            <boxGeometry args={[0.25, 0.8, 0.25]} />
+            <meshLambertMaterial color="#ffccaa" /> 
+          </mesh>
+          <mesh position={[0, -0.1, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.3, 0.26]} />
+            <meshLambertMaterial color="#0288d1" /> {/* Sleeves */}
+          </mesh>
+        </group>
+
+        {/* Right Arm Pivot (Shoulder) */}
+        <group ref={rightArmRef} position={[0.5, 1.6, 0]}>
+          <mesh position={[0, -0.4, 0]} castShadow>
+            <boxGeometry args={[0.25, 0.8, 0.25]} />
+            <meshLambertMaterial color="#ffccaa" />
+          </mesh>
+          <mesh position={[0, -0.1, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.3, 0.26]} />
+            <meshLambertMaterial color="#0288d1" /> {/* Sleeves */}
+          </mesh>
+        </group>
+
+        {/* Left Leg Pivot (Hip) */}
+        <group ref={leftLegRef} position={[-0.2, 0.7, 0]}>
+          <mesh position={[0, -0.35, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.7, 0.26]} />
+            <meshLambertMaterial color="#1565c0" /> {/* Dark blue pants */}
+          </mesh>
+          <mesh position={[0, -0.75, 0.05]} castShadow>
+            <boxGeometry args={[0.28, 0.15, 0.35]} />
+            <meshLambertMaterial color="#212121" /> {/* Shoes */}
+          </mesh>
+        </group>
+
+        {/* Right Leg Pivot (Hip) */}
+        <group ref={rightLegRef} position={[0.2, 0.7, 0]}>
+          <mesh position={[0, -0.35, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.7, 0.26]} />
+            <meshLambertMaterial color="#1565c0" />
+          </mesh>
+          <mesh position={[0, -0.75, 0.05]} castShadow>
+            <boxGeometry args={[0.28, 0.15, 0.35]} />
+            <meshLambertMaterial color="#212121" /> {/* Shoes */}
+          </mesh>
+        </group>
+
+      </group>
+
       <pointLight color="#4fc3f7" intensity={5} distance={10} decay={2} />
     </group>
   );
@@ -537,7 +643,7 @@ export default function IslandScene({ joystick, target, decoys, onMove, onProxim
         </group>
       ))}
 
-      <PlayerAvatar meshRef={playerMeshRef} target={target} />
+      <PlayerAvatar meshRef={playerMeshRef} target={target} joystick={joystick} />
 
       <GameLoop
         joystick={joystick}

@@ -139,5 +139,24 @@ export const api = {
       points_earned: number;
     }>;
   },
-};
 
+  /**
+   * Deduct points from a user for redeeming rewards
+   */
+  async deductPoints(userId: number, amount: number) {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/deduct`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to deduct points: ${response.status}`);
+    }
+
+    return response.json() as Promise<{
+      status: string;
+      new_total: number;
+    }>;
+  },
+};
