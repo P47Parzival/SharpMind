@@ -50,26 +50,40 @@ Respond ONLY in this exact JSON format (no markdown, no code blocks):
 
         result_text = response.choices[0].message.content.strip()
 
-        # Try to parse JSON from the response
-        # Handle cases where the model wraps it in code blocks
-        if "```" in result_text:
-            # Extract JSON from code block
-            json_start = result_text.find("{")
-            json_end = result_text.rfind("}") + 1
-            result_text = result_text[json_start:json_end]
+        # Robust JSON extraction: always find the deepest/outermost {} block
+        json_start = result_text.find("{")
+        json_end = result_text.rfind("}") + 1
+        
+        extracted_json_str = result_text
+        if json_start != -1 and json_end != 0:
+            extracted_json_str = result_text[json_start:json_end]
 
-        result = json.loads(result_text)
-        return {
-            "object_name": result.get("object_name", "Unknown Object"),
-            "description": result.get("description", "I couldn't describe this object."),
-        }
+        try:
+            result = json.loads(extracted_json_str)
+            return {
+                "object_name": result.get("object_name", "Unknown Object"),
+                "description": result.get("description", "I couldn't describe this object."),
+            }
+        except json.JSONDecodeError:
+            # Fallback: if JSON string is malformed, try to string match
+            import re
+            
+            # Simple regex to extract fields even if JSON is broken (e.g., unescaped quotes inside)
+            obj_match = re.search(r'"object_name"\s*:\s*"([^"]+)"', extracted_json_str)
+            desc_match = re.search(r'"description"\s*:\s*"(.+?)"(?=\s*(?:,"\}|$))', extracted_json_str)
+            
+            if obj_match and desc_match:
+                return {
+                    "object_name": obj_match.group(1),
+                    "description": desc_match.group(1),
+                }
 
-    except json.JSONDecodeError:
-        # If JSON parsing fails, try to extract info from plain text
-        return {
-            "object_name": "Mystery Object",
-            "description": result_text if result_text else "I see something interesting! Try again for a better look.",
-        }
+            # Ultimate fallback if nothing works
+            return {
+                "object_name": "Mystery Object",
+                "description": result_text if result_text else "I see something interesting! Try again for a better look.",
+            }
+
     except Exception as e:
         print(f"Groq Vision API error: {e}")
         return {
