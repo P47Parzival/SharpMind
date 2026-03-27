@@ -123,7 +123,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => router.push("/vocab_list")}
+          onPress={() => router.push("/vocab_levels")}
           activeOpacity={0.85}
         >
           <View style={[styles.actionIcon, { backgroundColor: "#FFF4E5" }]}>
