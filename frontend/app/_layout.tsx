@@ -33,6 +33,10 @@ export default function RootLayout() {
           name="result"
           options={{ headerShown: false, presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="lingo-island"
+          options={{ headerShown: false, presentation: 'fullScreenModal' }}
+        />
       </Stack>
       <StatusBar style="auto" />
       <Toast />

@@ -7,7 +7,7 @@ import {
   StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Camera, Search, Trophy, Zap, Star, BookOpen } from "lucide-react-native";
+import { Camera, Search, Trophy, Zap, Star, BookOpen, Map } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../../constants/app";
 
@@ -100,6 +100,29 @@ export default function HomeScreen() {
             <Text style={styles.actionDescription}>
               Check your points, streaks, and achievements!
             </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Lingo Island Banner (Night Theme) ── */}
+        <TouchableOpacity
+          style={[styles.actionCard, styles.islandCard]}
+          onPress={() => router.push("/lingo-island" as any)}
+          activeOpacity={0.82}
+          accessibilityLabel="Enter Lingo Island"
+        >
+          <View style={[styles.actionIcon, styles.islandIcon]}>
+            <Map color="#43E8D8" size={32} />
+          </View>
+          <View style={styles.actionText}>
+            <Text style={[styles.actionTitle, { color: "#43E8D8" }]}>
+              🏝️ Lingo Island
+            </Text>
+            <Text style={[styles.actionDescription, { color: "rgba(255,255,255,0.65)" }]}>
+              Explore a real 3D island at night!
+            </Text>
+          </View>
+          <View style={styles.islandBadge}>
+            <Text style={styles.islandBadgeText}>3D</Text>
           </View>
         </TouchableOpacity>
 
@@ -239,5 +262,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#795548",
     lineHeight: 20,
+  },
+  islandCard: {
+    backgroundColor: "#060825",
+    borderWidth: 1.5,
+    borderColor: "rgba(67,232,216,0.45)",
+    shadowColor: "#43E8D8",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  islandIcon: {
+    backgroundColor: "rgba(67,232,216,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(67,232,216,0.3)",
+  },
+  islandBadge: {
+    backgroundColor: "#6C63FF",
+    borderRadius: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+  },
+  islandBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
   },
 });
