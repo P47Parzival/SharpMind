@@ -32,7 +32,9 @@ const GLOW: Record<string, string> = {
 interface SceneProps {
   joystick: React.MutableRefObject<{ dx: number; dz: number }>;
   target: TargetObject;
+  decoys: TargetObject[];
   onMove: (x: number, z: number, dist: number) => void;
+  onProximityWarning?: (decoy: TargetObject) => void;
 }
 
 // ── Night stars ───────────────────────────────────────────────────────────────
@@ -347,14 +349,18 @@ function PlayerAvatar({ meshRef, target }: { meshRef: React.MutableRefObject<THR
 function GameLoop({
   joystick,
   target,
+  decoys,
   onMove,
+  onProximityWarning,
   playerMeshRef,
   playerPosRef,
   controlsRef,
 }: {
   joystick: React.MutableRefObject<{ dx: number; dz: number }>;
   target: TargetObject;
+  decoys: TargetObject[];
   onMove: (x: number, z: number, dist: number) => void;
+  onProximityWarning?: (decoy: TargetObject) => void;
   playerMeshRef: React.MutableRefObject<THREE.Group | null>;
   playerPosRef: React.MutableRefObject<{ x: number; z: number }>;
   controlsRef: React.MutableRefObject<any>;
@@ -362,6 +368,8 @@ function GameLoop({
   const frame = useRef(0);
   const fwd = useMemo(() => new THREE.Vector3(), []);
   const right = useMemo(() => new THREE.Vector3(), []);
+
+  const activeDecoyRef = useRef<string | null>(null);
 
   // Set initial camera position much closer for character-eye view
   useEffect(() => {
@@ -429,7 +437,7 @@ function GameLoop({
       }
     }
 
-    // ── 4. Win Check ──
+    // ── 4. Distance Checks ──
     const px = playerPosRef.current.x;
     const pz = playerPosRef.current.z;
     frame.current++;
@@ -438,6 +446,26 @@ function GameLoop({
       const tz = pz - target.z;
       const dist = Math.sqrt(tx * tx + tz * tz);
       onMove(px, pz, dist);
+
+      // Check decoys
+      if (onProximityWarning) {
+        let insideDecoy: TargetObject | null = null;
+        for (const decoy of decoys) {
+          const dxD = px - decoy.x;
+          const dzD = pz - decoy.z;
+          if (Math.sqrt(dxD * dxD + dzD * dzD) < 4.0) { 
+            insideDecoy = decoy;
+            break;
+          }
+        }
+        
+        if (insideDecoy && activeDecoyRef.current !== insideDecoy.id) {
+          activeDecoyRef.current = insideDecoy.id;
+          onProximityWarning(insideDecoy);
+        } else if (!insideDecoy) {
+          activeDecoyRef.current = null;
+        }
+      }
     }
   });
 
@@ -445,7 +473,7 @@ function GameLoop({
 }
 
 // ── Main Scene exported ───────────────────────────────────────────────────────
-export default function IslandScene({ joystick, target, onMove }: SceneProps) {
+export default function IslandScene({ joystick, target, decoys, onMove, onProximityWarning }: SceneProps) {
   const playerMeshRef = useRef<THREE.Group | null>(null);
   const playerPosRef = useRef({ x: 0, z: 0 });
   const controlsRef = useRef<any>(null);
@@ -499,12 +527,24 @@ export default function IslandScene({ joystick, target, onMove }: SceneProps) {
         <pointLight position={[0, 6, 0]} color={GLOW[target.name] ?? '#FFEB3B'} intensity={60} distance={100} decay={1.5} />
       </group>
 
+      {/* Decoy Placements */}
+      {decoys.map(decoy => (
+        <group key={decoy.id} position={[decoy.x, 0, decoy.z]}>
+          <DynamicModel name={decoy.name} />
+          {/* Decoys have a subtle gray/blue glow to trick the player! */}
+          <PulseRing color="#B0BEC5" />
+          <pointLight position={[0, 6, 0]} color="#B0BEC5" intensity={40} distance={80} decay={1.5} />
+        </group>
+      ))}
+
       <PlayerAvatar meshRef={playerMeshRef} target={target} />
 
       <GameLoop
         joystick={joystick}
         target={target}
+        decoys={decoys}
         onMove={onMove}
+        onProximityWarning={onProximityWarning}
         playerMeshRef={playerMeshRef}
         playerPosRef={playerPosRef}
         controlsRef={controlsRef}

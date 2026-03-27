@@ -13,9 +13,10 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
-import { useGameState } from './hooks/useGameState';
+import { useGameState, TargetObject } from './hooks/useGameState';
 import IslandScene from './components/IslandScene';
 import Joystick from './components/Joystick';
+import { speakText, stopSpeaking } from '../../../services/audio';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const ExpoAV = require('expo-av') as {
@@ -121,10 +122,11 @@ const cb = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function LingoIslandScreen() {
   const router = useRouter();
-  const { targetObject, score, round, triggerWin, resetGame } = useGameState();
+  const { targetObject, decoys, score, round, triggerWin, resetGame } = useGameState();
   const joystickRef = useRef({ dx: 0, dz: 0 });
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const soundRef  = useRef<{ unloadAsync: () => Promise<void> } | null>(null);
+  const distVoiceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [distHint, setDistHint] = useState<number | null>(null);
@@ -142,14 +144,20 @@ export default function LingoIslandScreen() {
     useCallback(() => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
       setPhase('loading');
-      const timer = setTimeout(() => setPhase('exploring'), 2000);
+      const timer = setTimeout(() => {
+        setPhase('exploring');
+        speakText(`Find the ${targetObject.name}!`);
+        startVoiceCooldown(8000);
+      }, 2000);
 
       return () => {
         clearTimeout(timer);
+        if (distVoiceTimer.current) clearTimeout(distVoiceTimer.current);
         ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
         soundRef.current?.unloadAsync();
+        stopSpeaking();
       };
-    }, [])
+    }, [targetObject.name])
   );
 
   // Play win sound
@@ -164,6 +172,13 @@ export default function LingoIslandScreen() {
     } catch (_) {}
   }, []);
 
+  const startVoiceCooldown = (ms: number) => {
+    if (distVoiceTimer.current) clearTimeout(distVoiceTimer.current);
+    distVoiceTimer.current = setTimeout(() => {
+      distVoiceTimer.current = null;
+    }, ms);
+  };
+
   // Distance check callback from GameLoop
   const handleMove = useCallback((_x: number, _z: number, dist: number) => {
     setDistHint(dist);
@@ -172,7 +187,28 @@ export default function LingoIslandScreen() {
       if (dist < 3.5) return 'near';
       return 'exploring';
     });
-  }, []);
+
+    if (!distVoiceTimer.current) {
+      if (dist < 15) {
+        speakText(`You are very near the ${targetObject.name}, look around carefully!`);
+        startVoiceCooldown(10000);
+      } else if (dist < 40) {
+        speakText(`You are getting close to the ${targetObject.name}.`);
+        startVoiceCooldown(12000);
+      } else if (dist < 100) {
+        speakText(`You're heading in the right direction to find the ${targetObject.name}.`);
+        startVoiceCooldown(15000);
+      }
+    }
+  }, [targetObject.name]);
+
+  const handleProximityWarning = useCallback((decoy: TargetObject) => {
+    if (distVoiceTimer.current) clearTimeout(distVoiceTimer.current);
+    stopSpeaking();
+    
+    speakText(`This is a ${decoy.name}, not the ${targetObject.name}. Keep searching!`);
+    startVoiceCooldown(6000);
+  }, [targetObject.name]);
 
   // Tap collect
   const handleCollect = useCallback(() => {
@@ -200,7 +236,13 @@ export default function LingoIslandScreen() {
 
       {/* R3F Scene handles camera & player automatically via joystickRef */}
       {phase !== 'loading' && (
-        <IslandScene joystick={joystickRef} target={targetObject} onMove={handleMove} />
+        <IslandScene 
+          joystick={joystickRef} 
+          target={targetObject} 
+          decoys={decoys}
+          onMove={handleMove} 
+          onProximityWarning={handleProximityWarning}
+        />
       )}
 
       {/* Overlays */}

@@ -51,31 +51,46 @@ export const ENDLESS_ITEMS: TargetObject[] = [
   { id: '30', name: 'Golden Key', emoji: '🗝️', x: 0, z: 0 },
 ];
 
-function pickRandom(exclude?: TargetObject): TargetObject {
+function generateRound(exclude?: TargetObject): { target: TargetObject, decoys: TargetObject[] } {
   // Exclude Landmarks so the user ALWAYS gets a real 3D procedural item!
   const all = [...FURNITURE, ...ENDLESS_ITEMS];
   const options = exclude
     ? all.filter(o => o.id !== exclude.id)
     : all;
   
-  const base = options[Math.floor(Math.random() * options.length)];
+  // Shuffle to pick 4 distinct items (1 target + 3 decoys)
+  const shuffled = [...options].sort(() => 0.5 - Math.random());
   
-  // Give it random massive map coordinates
-  const r = 50 + Math.random() * 200;
-  const a = Math.random() * Math.PI * 2;
-  return { ...base, x: Math.cos(a) * r, z: Math.sin(a) * r };
+  const placeRandomly = (base: TargetObject) => {
+    // Give it random massive map coordinates
+    const r = 50 + Math.random() * 200;
+    const a = Math.random() * Math.PI * 2;
+    return { ...base, x: Math.cos(a) * r, z: Math.sin(a) * r };
+  };
+
+  return {
+    target: placeRandomly(shuffled[0]),
+    decoys: [
+      placeRandomly(shuffled[1]),
+      placeRandomly(shuffled[2]),
+      placeRandomly(shuffled[3])
+    ]
+  };
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 export function useGameState() {
   const [playerPos, setPlayerPos] = useState<Vec2>({ x: 0, z: 0 });
-  const [targetObject, setTargetObject] = useState<TargetObject>(pickRandom);
+  const [roundData, setRoundData] = useState(() => generateRound());
   const [score, setScore]   = useState(0);
   const [found, setFound]   = useState(false);
   const [round, setRound]   = useState(1);
 
   const WIN_DIST = 2.5;
   const ISLAND_RADIUS = 8.5;
+
+  const targetObject = roundData.target;
+  const decoys = roundData.decoys;
 
   const updatePlayerPos = useCallback((x: number, z: number) => {
     setPlayerPos({ x, z });
@@ -98,13 +113,14 @@ export function useGameState() {
   const resetGame = useCallback(() => {
     setFound(false);
     setPlayerPos({ x: 0, z: 0 });
-    setTargetObject(prev => pickRandom(prev));
+    setRoundData(prev => generateRound(prev.target));
     setRound(r => r + 1);
   }, []);
 
   return {
     playerPos,
     targetObject,
+    decoys,
     score,
     found,
     round,
