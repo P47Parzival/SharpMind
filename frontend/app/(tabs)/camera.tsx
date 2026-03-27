@@ -55,7 +55,6 @@ export default function CameraScreen() {
 
       if (photo?.base64) {
         const result = await api.detectObject(photo.base64);
-        // Navigate to result screen with detected data
         router.push({
           pathname: "/result",
           params: {
@@ -79,12 +78,16 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Camera as a flat layer — no children inside CameraView */}
       <CameraView
         ref={cameraRef}
-        style={styles.camera}
+        style={StyleSheet.absoluteFill}
         facing={facing}
         flash={flash ? "on" : "off"}
-      >
+      />
+
+      {/* All UI overlays on top using absolute positioning */}
+      <View style={styles.overlay}>
         {/* Top controls */}
         <View style={styles.topControls}>
           <TouchableOpacity
@@ -133,7 +136,7 @@ export default function CameraScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 }
@@ -142,6 +145,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   centered: {
     flex: 1,
@@ -179,9 +186,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
-  },
-  camera: {
-    flex: 1,
   },
   topControls: {
     flexDirection: "row",

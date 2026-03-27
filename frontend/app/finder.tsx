@@ -33,12 +33,10 @@ export default function FinderScreen() {
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
 
-  // Fetch a challenge on mount
   useEffect(() => {
     fetchChallenge();
   }, []);
 
-  // Countdown timer
   useEffect(() => {
     if (!challenge || result || timeLeft <= 0) return;
 
@@ -60,7 +58,6 @@ export default function FinderScreen() {
     return () => clearInterval(timer);
   }, [challenge, result]);
 
-  // Bounce animation for the emoji
   useEffect(() => {
     const bounce = Animated.loop(
       Animated.sequence([
@@ -139,7 +136,11 @@ export default function FinderScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing="back">
+      {/* Camera as flat layer — no children */}
+      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+
+      {/* All overlays on top */}
+      <View style={styles.overlay}>
         {/* Top Bar */}
         <View style={styles.topBar}>
           <TouchableOpacity
@@ -237,7 +238,7 @@ export default function FinderScreen() {
             )}
           </View>
         )}
-      </CameraView>
+      </View>
 
       {/* Loading overlay */}
       {isLoading && (
@@ -254,6 +255,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   centered: {
     flex: 1,
@@ -278,9 +283,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "700",
     fontSize: 16,
-  },
-  camera: {
-    flex: 1,
   },
   topBar: {
     flexDirection: "row",
@@ -436,6 +438,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.9)",
     gap: 12,
+    zIndex: 2,
   },
   loadingText: {
     fontSize: 16,

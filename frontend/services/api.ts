@@ -1,6 +1,8 @@
 // Backend API base URL - change this to your backend IP when testing on device
 // For Android emulator use 10.0.2.2, for iOS simulator use localhost
-const API_BASE_URL = "http://10.0.2.2:8000";
+// IMPORTANT: Use your laptop's WiFi IP when using Expo Go on a physical device
+// Find it by running: ipconfig (Windows) or ifconfig (Mac/Linux)
+const API_BASE_URL = "http://10.10.65.126:8000";
 
 export const api = {
   /**

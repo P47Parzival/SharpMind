@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { Audio } from "expo-audio";
 
 let currentSound: Audio.Sound | null = null;
 
@@ -10,20 +10,12 @@ export async function playAudioFromUrl(url: string): Promise<void> {
     // Stop any currently playing audio
     await stopAudio();
 
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: url },
-      { shouldPlay: true }
-    );
+    const player = Audio.createPlayer(url);
+    await player.play();
 
-    currentSound = sound;
-
-    // Clean up when playback finishes
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-        currentSound = null;
-      }
-    });
+    // Store reference for cleanup — expo-audio uses a different API
+    // but we keep a simple reference
+    currentSound = player as any;
   } catch (error) {
     console.error("Audio playback error:", error);
   }
@@ -35,22 +27,10 @@ export async function playAudioFromUrl(url: string): Promise<void> {
 export async function stopAudio(): Promise<void> {
   if (currentSound) {
     try {
-      await currentSound.stopAsync();
-      await currentSound.unloadAsync();
+      (currentSound as any).remove?.();
     } catch (e) {
       // Ignore errors during cleanup
     }
     currentSound = null;
   }
-}
-
-/**
- * Set up audio mode for the app
- */
-export async function setupAudio(): Promise<void> {
-  await Audio.setAudioModeAsync({
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-  });
 }
