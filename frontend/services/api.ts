@@ -1,3 +1,5 @@
+import * as FileSystem from 'expo-file-system/legacy';
+
 // Backend API base URL - change this to your backend IP when testing on device
 // For Android emulator use 10.0.2.2, for iOS simulator use localhost
 // IMPORTANT: Use your laptop's WiFi IP when using Expo Go on a physical device
@@ -8,11 +10,11 @@ export const api = {
   /**
    * Detect an object from a base64-encoded image
    */
-  async detectObject(imageBase64: string) {
+  async detectObject(imageBase64: string, language: string = "English") {
     const response = await fetch(`${API_BASE_URL}/detect/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_base64: imageBase64 }),
+      body: JSON.stringify({ image_base64: imageBase64, language }),
     });
 
     if (!response.ok) {
@@ -108,4 +110,34 @@ export const api = {
       challenges_completed: number;
     }>;
   },
+
+  /**
+   * Check pronunciation of a word by uploading an audio base64 payload
+   */
+  async checkPronunciation(targetWord: string, audioUri: string) {
+    // Read the recorded file directly to a Base64 string
+    const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+      encoding: 'base64',
+    });
+
+    const response = await fetch(`${API_BASE_URL}/vocab/pronounce`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        target_word: targetWord,
+        audio_base64: audioBase64,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Pronunciation check failed: ${response.status}`);
+    }
+
+    return response.json() as Promise<{
+      is_correct: boolean;
+      feedback: string;
+      points_earned: number;
+    }>;
+  },
 };
+

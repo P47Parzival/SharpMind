@@ -1,16 +1,52 @@
-import { View, Text, StyleSheet, ScrollView, StatusBar } from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, StatusBar, ActivityIndicator } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { Trophy, Star, Zap, BookOpen, Target, Calendar } from "lucide-react-native";
 import { COLORS } from "../../constants/app";
+import { api } from "../../services/api";
 
 export default function ProfileScreen() {
-  // In a real app, this would come from a store/context
-  const stats = {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
     displayName: "Explorer",
     totalPoints: 0,
     streakCount: 0,
     objectsDetected: 0,
     challengesCompleted: 0,
-  };
+  });
+
+  // Fetch stats whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchStats = async () => {
+        try {
+          // Using default user ID 1 for the hackathon
+          const data = await api.getUserStats(1);
+          if (isActive) {
+            setStats({
+              displayName: data.display_name,
+              totalPoints: data.total_points,
+              streakCount: data.streak_count,
+              objectsDetected: data.objects_detected,
+              challengesCompleted: data.challenges_completed,
+            });
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user stats", error);
+          if (isActive) setLoading(false);
+        }
+      };
+
+      fetchStats();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -33,71 +69,77 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Grid */}
-        <Text style={styles.sectionTitle}>Your Stats</Text>
-        <View style={styles.statsGrid}>
-          <View style={[styles.statItem, { backgroundColor: "#EDE9FF" }]}>
-            <BookOpen color={COLORS.primary} size={28} />
-            <Text style={styles.statValue}>{stats.objectsDetected}</Text>
-            <Text style={styles.statLabel}>Objects Learned</Text>
-          </View>
-          <View style={[styles.statItem, { backgroundColor: "#FFE8EC" }]}>
-            <Target color={COLORS.secondary} size={28} />
-            <Text style={styles.statValue}>{stats.challengesCompleted}</Text>
-            <Text style={styles.statLabel}>Challenges Won</Text>
-          </View>
-          <View style={[styles.statItem, { backgroundColor: "#E8FFF6" }]}>
-            <Zap color={COLORS.success} size={28} />
-            <Text style={styles.statValue}>{stats.streakCount}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
-          </View>
-          <View style={[styles.statItem, { backgroundColor: "#FFF8E1" }]}>
-            <Trophy color="#F39C12" size={28} />
-            <Text style={styles.statValue}>{stats.totalPoints}</Text>
-            <Text style={styles.statLabel}>Total Points</Text>
-          </View>
-        </View>
+        {loading ? (
+          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+        ) : (
+          <>
+            {/* Stats Grid */}
+            <Text style={styles.sectionTitle}>Your Stats</Text>
+            <View style={styles.statsGrid}>
+              <View style={[styles.statItem, { backgroundColor: "#EDE9FF" }]}>
+                <BookOpen color={COLORS.primary} size={28} />
+                <Text style={styles.statValue}>{stats.objectsDetected}</Text>
+                <Text style={styles.statLabel}>Objects Learned</Text>
+              </View>
+              <View style={[styles.statItem, { backgroundColor: "#FFE8EC" }]}>
+                <Target color={COLORS.secondary} size={28} />
+                <Text style={styles.statValue}>{stats.challengesCompleted}</Text>
+                <Text style={styles.statLabel}>Challenges Won</Text>
+              </View>
+              <View style={[styles.statItem, { backgroundColor: "#E8FFF6" }]}>
+                <Zap color={COLORS.success} size={28} />
+                <Text style={styles.statValue}>{stats.streakCount}</Text>
+                <Text style={styles.statLabel}>Day Streak</Text>
+              </View>
+              <View style={[styles.statItem, { backgroundColor: "#FFF8E1" }]}>
+                <Trophy color="#F39C12" size={28} />
+                <Text style={styles.statValue}>{stats.totalPoints}</Text>
+                <Text style={styles.statLabel}>Total Points</Text>
+              </View>
+            </View>
 
-        {/* Achievements */}
-        <Text style={styles.sectionTitle}>Achievements</Text>
-        <View style={styles.achievementCard}>
-          <Text style={styles.achievementEmoji}>🌟</Text>
-          <View style={styles.achievementInfo}>
-            <Text style={styles.achievementTitle}>First Discovery</Text>
-            <Text style={styles.achievementDesc}>
-              Detect your first object to unlock this!
-            </Text>
-          </View>
-          <View style={styles.lockedBadge}>
-            <Text style={styles.lockedText}>🔒</Text>
-          </View>
-        </View>
+            {/* Achievements */}
+            <Text style={styles.sectionTitle}>Achievements</Text>
+            <View style={[styles.achievementCard, stats.objectsDetected > 0 ? styles.achievementUnlocked : null]}>
+              <Text style={styles.achievementEmoji}>🌟</Text>
+              <View style={styles.achievementInfo}>
+                <Text style={styles.achievementTitle}>First Discovery</Text>
+                <Text style={styles.achievementDesc}>
+                  {stats.objectsDetected > 0 ? "You detected your first object!" : "Detect your first object to unlock this!"}
+                </Text>
+              </View>
+              <View style={stats.objectsDetected > 0 ? styles.unlockedBadge : styles.lockedBadge}>
+                <Text style={styles.lockedText}>{stats.objectsDetected > 0 ? "✓" : "🔒"}</Text>
+              </View>
+            </View>
 
-        <View style={styles.achievementCard}>
-          <Text style={styles.achievementEmoji}>🔥</Text>
-          <View style={styles.achievementInfo}>
-            <Text style={styles.achievementTitle}>3-Day Streak</Text>
-            <Text style={styles.achievementDesc}>
-              Use the app 3 days in a row!
-            </Text>
-          </View>
-          <View style={styles.lockedBadge}>
-            <Text style={styles.lockedText}>🔒</Text>
-          </View>
-        </View>
+            <View style={[styles.achievementCard, stats.streakCount >= 3 ? styles.achievementUnlocked : null]}>
+              <Text style={styles.achievementEmoji}>🔥</Text>
+              <View style={styles.achievementInfo}>
+                <Text style={styles.achievementTitle}>3-Day Streak</Text>
+                <Text style={styles.achievementDesc}>
+                  {stats.streakCount >= 3 ? "You used the app 3 days in a row!" : "Use the app 3 days in a row!"}
+                </Text>
+              </View>
+              <View style={stats.streakCount >= 3 ? styles.unlockedBadge : styles.lockedBadge}>
+                <Text style={styles.lockedText}>{stats.streakCount >= 3 ? "✓" : "🔒"}</Text>
+              </View>
+            </View>
 
-        <View style={styles.achievementCard}>
-          <Text style={styles.achievementEmoji}>🏆</Text>
-          <View style={styles.achievementInfo}>
-            <Text style={styles.achievementTitle}>Object Hunter</Text>
-            <Text style={styles.achievementDesc}>
-              Complete 10 finder challenges!
-            </Text>
-          </View>
-          <View style={styles.lockedBadge}>
-            <Text style={styles.lockedText}>🔒</Text>
-          </View>
-        </View>
+            <View style={[styles.achievementCard, stats.challengesCompleted >= 10 ? styles.achievementUnlocked : null]}>
+              <Text style={styles.achievementEmoji}>🏆</Text>
+              <View style={styles.achievementInfo}>
+                <Text style={styles.achievementTitle}>Object Hunter</Text>
+                <Text style={styles.achievementDesc}>
+                  {stats.challengesCompleted >= 10 ? "You completed 10 finder challenges!" : "Complete 10 finder challenges!"}
+                </Text>
+              </View>
+              <View style={stats.challengesCompleted >= 10 ? styles.unlockedBadge : styles.lockedBadge}>
+                <Text style={styles.lockedText}>{stats.challengesCompleted >= 10 ? "✓" : "🔒"}</Text>
+              </View>
+            </View>
+          </>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -167,7 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   statItem: {
     width: "47%",
@@ -198,6 +240,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
+    opacity: 0.7, // dim locked achievements slightly
+  },
+  achievementUnlocked: {
+    opacity: 1,
+    borderColor: COLORS.success,
+    borderWidth: 1,
   },
   achievementEmoji: {
     fontSize: 32,
@@ -224,7 +272,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  unlockedBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E8FFF6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   lockedText: {
-    fontSize: 18,
+    fontSize: 16,
+    color: COLORS.success,
+    fontWeight: "bold",
   },
 });

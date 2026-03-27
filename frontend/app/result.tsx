@@ -1,32 +1,38 @@
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import { useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Volume2, Camera, MessageCircle } from "lucide-react-native";
+import { ArrowLeft, Volume2, Camera } from "lucide-react-native";
 import { COLORS } from "../constants/app";
 import { speakObjectDescription, stopSpeaking } from "../services/audio";
-import { useEffect } from "react";
 
 export default function ResultScreen() {
-  const { objectName, description, audioUrl } = useLocalSearchParams<{
+  const { objectName, description, languageCode } = useLocalSearchParams<{
     objectName: string;
     description: string;
-    audioUrl: string;
+    languageCode: string;
   }>();
   const router = useRouter();
 
-  // Auto-speak the description when the screen loads
+  // Auto-speak the description when the screen loads (device TTS)
   useEffect(() => {
     if (objectName && description) {
-      speakObjectDescription(objectName, description);
+      speakObjectDescription(objectName, description, languageCode || "en-US");
     }
 
     return () => {
       stopSpeaking();
     };
-  }, []);
+  }, [objectName, description, languageCode]);
 
   const handleSpeak = () => {
     if (objectName && description) {
-      speakObjectDescription(objectName, description);
+      speakObjectDescription(objectName, description, languageCode || "en-US");
     }
   };
 
@@ -67,31 +73,15 @@ export default function ResultScreen() {
           </Text>
         </View>
 
-        {/* Speak Button - uses device TTS (always works) */}
+        {/* Speak Button - device TTS (always works) */}
         <TouchableOpacity
           style={styles.audioButton}
           onPress={handleSpeak}
           activeOpacity={0.8}
         >
           <Volume2 color="#FFFFFF" size={24} />
-          <Text style={styles.audioButtonText}>🔊 Hear Again</Text>
+          <Text style={styles.audioButtonText}>🔊 Hear Description Again</Text>
         </TouchableOpacity>
-
-        {/* VAPI Interactive Button - opens voice conversation */}
-        {audioUrl ? (
-          <TouchableOpacity
-            style={styles.vapiButton}
-            onPress={() => {
-              // audioUrl is actually the VAPI webCallUrl
-              // In future: open VAPI web call for interactive teaching
-              handleSpeak();
-            }}
-            activeOpacity={0.8}
-          >
-            <MessageCircle color="#FFFFFF" size={24} />
-            <Text style={styles.vapiButtonText}>💬 Talk About It</Text>
-          </TouchableOpacity>
-        ) : null}
 
         {/* Points Earned */}
         <View style={styles.pointsCard}>
@@ -219,42 +209,21 @@ const styles = StyleSheet.create({
   },
   audioButton: {
     flexDirection: "row",
-    backgroundColor: COLORS.success,
+    backgroundColor: "#7C5CFC", // Purple for the voice 
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 24,
     justifyContent: "center",
     alignItems: "center",
     gap: 10,
-    marginBottom: 12,
-    shadowColor: COLORS.success,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  audioButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  vapiButton: {
-    flexDirection: "row",
-    backgroundColor: "#7C5CFC",
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 16,
+    marginBottom: 20,
     shadowColor: "#7C5CFC",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
-  vapiButtonText: {
+  audioButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
@@ -285,13 +254,13 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     flexDirection: "row",
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.success,
     borderRadius: 18,
     paddingVertical: 16,
     justifyContent: "center",
     alignItems: "center",
     gap: 10,
-    shadowColor: COLORS.primary,
+    shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
