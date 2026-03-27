@@ -1,25 +1,44 @@
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from database import engine
 import models
-from database import SessionLocal, engine
 
+from routers import detection, finder, users
+
+# Create all database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="IITRAM API")
+app = FastAPI(
+    title="SharpMind API",
+    description="AR Vocabulary Learning App Backend",
+    version="1.0.0",
+)
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# CORS - allow React Native / Expo requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(detection.router)
+app.include_router(finder.router)
+app.include_router(users.router)
+
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to IITRAM Backend API!"}
-
-@app.get("/users/")
-def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = db.query(models.User).offset(skip).limit(limit).all()
-    return users
+    return {
+        "message": "Welcome to SharpMind API! 🧠",
+        "docs": "/docs",
+        "endpoints": {
+            "detect": "POST /detect/",
+            "finder_challenge": "GET /finder/challenge",
+            "finder_verify": "POST /finder/verify",
+            "create_user": "POST /users/",
+            "user_stats": "GET /users/{id}/stats",
+        },
+    }
