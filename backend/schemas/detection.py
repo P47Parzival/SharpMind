@@ -54,3 +54,15 @@ class UserStatsResponse(BaseModel):
     streak_count: int
     objects_detected: int
     challenges_completed: int
+
+
+# --- Vocab Voice Coach ---
+class PronunciationRequest(BaseModel):
+    target_word: str
+    audio_base64: str
+
+
+class PronunciationResponse(BaseModel):
+    is_correct: bool
+    feedback: str
+    points_earned: int

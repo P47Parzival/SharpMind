@@ -122,6 +122,22 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.actionCard}
+          onPress={() => router.push("/vocab_list")}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#FFF4E5" }]}>
+            <Text style={{ fontSize: 32 }}>🎙️</Text>
+          </View>
+          <View style={styles.actionText}>
+            <Text style={styles.actionTitle}>🗣️ Improve Vocab</Text>
+            <Text style={styles.actionDescription}>
+              Practice saying words aloud with your smart voice coach!
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
           onPress={() => router.push("/(tabs)/profile")}
           activeOpacity={0.85}
         >
