@@ -80,15 +80,19 @@ async def verify_challenge(
         points = POINTS_PER_FIND
         message = f"🎉 Amazing! You found the {request.target_object}! +{points} points!"
 
-        # Save the challenge
+        # Save the challenge to default user
         challenge = models.FinderChallenge(
             target_object=request.target_object,
             is_completed=True,
             points_earned=points,
             completed_at=datetime.now(timezone.utc),
+            user_id=1
         )
         db.add(challenge)
-        db.commit()
+        
+        # Update user points and daily streak
+        from services.user_service import award_points_and_update_streak
+        award_points_and_update_streak(db, user_id=1, points=points)
 
         return FinderVerifyResponse(
             is_match=True,

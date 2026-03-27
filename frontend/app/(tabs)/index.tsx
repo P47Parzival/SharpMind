@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,13 +7,45 @@ import {
   TouchableOpacity,
   StatusBar,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Camera, Search, Trophy, Zap, Star, BookOpen } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../../constants/app";
+import { api } from "../../services/api";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [stats, setStats] = useState({
+    totalPoints: 0,
+    streakCount: 0,
+    objectsDetected: 0,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchStats = async () => {
+        try {
+          const data = await api.getUserStats(1);
+          if (isActive) {
+            setStats({
+              totalPoints: data.total_points,
+              streakCount: data.streak_count,
+              objectsDetected: data.objects_detected,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch user stats on home screen", error);
+        }
+      };
+
+      fetchStats();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -30,17 +63,17 @@ export default function HomeScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Star color="#FFD700" size={20} />
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{stats.totalPoints}</Text>
               <Text style={styles.statLabel}>Points</Text>
             </View>
             <View style={styles.statCard}>
               <Zap color="#FF6584" size={20} />
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{stats.streakCount}</Text>
               <Text style={styles.statLabel}>Streak</Text>
             </View>
             <View style={styles.statCard}>
               <BookOpen color="#43E8D8" size={20} />
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{stats.objectsDetected}</Text>
               <Text style={styles.statLabel}>Objects</Text>
             </View>
           </View>
