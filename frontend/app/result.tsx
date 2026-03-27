@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Volume2, Camera } from "lucide-react-native";
+import { ArrowLeft, Volume2, Camera, MessageCircle } from "lucide-react-native";
 import { COLORS } from "../constants/app";
-import { playAudioFromUrl } from "../services/audio";
+import { speakObjectDescription, stopSpeaking } from "../services/audio";
+import { useEffect } from "react";
 
 export default function ResultScreen() {
   const { objectName, description, audioUrl } = useLocalSearchParams<{
@@ -12,9 +13,20 @@ export default function ResultScreen() {
   }>();
   const router = useRouter();
 
-  const handlePlayAudio = async () => {
-    if (audioUrl) {
-      await playAudioFromUrl(audioUrl);
+  // Auto-speak the description when the screen loads
+  useEffect(() => {
+    if (objectName && description) {
+      speakObjectDescription(objectName, description);
+    }
+
+    return () => {
+      stopSpeaking();
+    };
+  }, []);
+
+  const handleSpeak = () => {
+    if (objectName && description) {
+      speakObjectDescription(objectName, description);
     }
   };
 
@@ -26,7 +38,10 @@ export default function ResultScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => {
+            stopSpeaking();
+            router.back();
+          }}
         >
           <ArrowLeft color={COLORS.textPrimary} size={24} />
         </TouchableOpacity>
@@ -52,23 +67,31 @@ export default function ResultScreen() {
           </Text>
         </View>
 
-        {/* Audio Button */}
+        {/* Speak Button - uses device TTS (always works) */}
+        <TouchableOpacity
+          style={styles.audioButton}
+          onPress={handleSpeak}
+          activeOpacity={0.8}
+        >
+          <Volume2 color="#FFFFFF" size={24} />
+          <Text style={styles.audioButtonText}>🔊 Hear Again</Text>
+        </TouchableOpacity>
+
+        {/* VAPI Interactive Button - opens voice conversation */}
         {audioUrl ? (
           <TouchableOpacity
-            style={styles.audioButton}
-            onPress={handlePlayAudio}
+            style={styles.vapiButton}
+            onPress={() => {
+              // audioUrl is actually the VAPI webCallUrl
+              // In future: open VAPI web call for interactive teaching
+              handleSpeak();
+            }}
             activeOpacity={0.8}
           >
-            <Volume2 color="#FFFFFF" size={24} />
-            <Text style={styles.audioButtonText}>🔊 Hear Again</Text>
+            <MessageCircle color="#FFFFFF" size={24} />
+            <Text style={styles.vapiButtonText}>💬 Talk About It</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={styles.noAudioCard}>
-            <Text style={styles.noAudioText}>
-              🔇 Audio not available for this detection.
-            </Text>
-          </View>
-        )}
+        ) : null}
 
         {/* Points Earned */}
         <View style={styles.pointsCard}>
@@ -81,7 +104,10 @@ export default function ResultScreen() {
       <View style={styles.bottomActions}>
         <TouchableOpacity
           style={styles.primaryAction}
-          onPress={() => router.back()}
+          onPress={() => {
+            stopSpeaking();
+            router.back();
+          }}
           activeOpacity={0.85}
         >
           <Camera color="#FFFFFF" size={20} />
@@ -90,7 +116,10 @@ export default function ResultScreen() {
 
         <TouchableOpacity
           style={styles.secondaryAction}
-          onPress={() => router.push("/")}
+          onPress={() => {
+            stopSpeaking();
+            router.push("/");
+          }}
           activeOpacity={0.85}
         >
           <Text style={styles.secondaryActionText}>Go Home</Text>
@@ -197,7 +226,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 10,
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -209,17 +238,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
-  noAudioCard: {
-    backgroundColor: "#FFF8E1",
-    borderRadius: 14,
-    padding: 14,
+  vapiButton: {
+    flexDirection: "row",
+    backgroundColor: "#7C5CFC",
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    justifyContent: "center",
     alignItems: "center",
+    gap: 10,
     marginBottom: 16,
+    shadowColor: "#7C5CFC",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  noAudioText: {
-    color: "#795548",
-    fontSize: 14,
-    fontWeight: "500",
+  vapiButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
   },
   pointsCard: {
     flexDirection: "row",

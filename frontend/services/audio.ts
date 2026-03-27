@@ -1,36 +1,44 @@
-import { Audio } from "expo-audio";
-
-let currentSound: Audio.Sound | null = null;
+import * as Speech from "expo-speech";
 
 /**
- * Play audio from a URL (used for TTS playback)
+ * Speak text using the device's built-in TTS (expo-speech).
+ * This works instantly, offline, and on all devices.
  */
-export async function playAudioFromUrl(url: string): Promise<void> {
-  try {
-    // Stop any currently playing audio
-    await stopAudio();
+export function speakText(text: string, language: string = "en"): void {
+  // Stop any currently playing speech
+  Speech.stop();
 
-    const player = Audio.createPlayer(url);
-    await player.play();
-
-    // Store reference for cleanup — expo-audio uses a different API
-    // but we keep a simple reference
-    currentSound = player as any;
-  } catch (error) {
-    console.error("Audio playback error:", error);
-  }
+  Speech.speak(text, {
+    language,
+    pitch: 1.1, // Slightly higher pitch for kid-friendly voice
+    rate: 0.85, // Slightly slower for clarity
+    onError: (error) => {
+      console.error("Speech error:", error);
+    },
+  });
 }
 
 /**
- * Stop currently playing audio
+ * Speak the object name and description
  */
-export async function stopAudio(): Promise<void> {
-  if (currentSound) {
-    try {
-      (currentSound as any).remove?.();
-    } catch (e) {
-      // Ignore errors during cleanup
-    }
-    currentSound = null;
-  }
+export function speakObjectDescription(
+  objectName: string,
+  description: string
+): void {
+  const speech = `This is a ${objectName}! ${description}`;
+  speakText(speech);
+}
+
+/**
+ * Stop any currently playing speech
+ */
+export function stopSpeaking(): void {
+  Speech.stop();
+}
+
+/**
+ * Check if the device is currently speaking
+ */
+export async function isSpeaking(): Promise<boolean> {
+  return Speech.isSpeakingAsync();
 }
