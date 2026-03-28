@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 // For Android emulator use 10.0.2.2, for iOS simulator use localhost
 // IMPORTANT: Use your laptop's WiFi IP when using Expo Go on a physical device
 // Find it by running: ipconfig (Windows) or ifconfig (Mac/Linux)
-const API_BASE_URL = "http://192.168.137.180:8000";
+const API_BASE_URL = "http://10.10.65.126:8000";
 export const api = {
   /**
    * Detect an object from a base64-encoded image
