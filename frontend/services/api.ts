@@ -113,7 +113,7 @@ export const api = {
   /**
    * Check pronunciation of a word by uploading an audio base64 payload
    */
-  async checkPronunciation(targetWord: string, audioUri: string) {
+  async checkPronunciation(targetWord: string, audioUri: string, languageCode: string = "en-US") {
     // Read the recorded file directly to a Base64 string
     const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
       encoding: 'base64',
@@ -125,6 +125,7 @@ export const api = {
       body: JSON.stringify({
         target_word: targetWord,
         audio_base64: audioBase64,
+        language_code: languageCode,
       }),
     });
 

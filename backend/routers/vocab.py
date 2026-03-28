@@ -26,7 +26,11 @@ async def check_pronunciation(
     Evaluate pronunciation for the target word based on audio base64 payload.
     If correct, awards 5 points.
     """
-    result = await evaluate_pronunciation(request.target_word, request.audio_base64)
+    result = await evaluate_pronunciation(
+        request.target_word,
+        request.audio_base64,
+        request.language_code,
+    )
     
     is_correct = result.get("is_correct", False)
     feedback = result.get("feedback", "Let's try again!")

@@ -6,11 +6,29 @@ import { Audio } from 'expo-av';
 import { Mic, ChevronLeft, Volume2, Trophy, ArrowRight, RefreshCcw } from 'lucide-react-native';
 import { api } from '../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Speech from 'expo-speech';
 
-const LEVEL_WORDS: Record<string, string[]> = {
-    '1': ['Apple', 'Cat', 'Dog', 'Sun', 'Moon', 'Tree', 'Car', 'Book', 'Fish', 'Mango', 'Bird', 'Ball', 'House', 'Milk', 'Cake'],
-    '2': ['Yellow', 'Window', 'Happy', 'Turtle', 'Breakfast', 'Penguin', 'Monkey', 'Castle', 'Elephant', 'Bicycle', 'Butterfly', 'Rainbow', 'Dinosaur'],
-    '3': ['Miscellaneous', 'Mississippi', 'Encyclopedia', 'Rhinoceros', 'Hippopotamus', 'Thermometer', 'Pterodactyl', 'Unbelievable', 'Extraordinary', 'Photosynthesis', 'Magniloquent', 'Ambidextrous']
+const LEVEL_WORDS: Record<string, Record<string, string[]>> = {
+    'en-US': {
+        '1': ['Apple', 'Cat', 'Dog', 'Sun', 'Moon', 'Tree', 'Car', 'Book', 'Fish', 'Mango', 'Bird', 'Ball', 'House', 'Milk', 'Cake'],
+        '2': ['Yellow', 'Window', 'Happy', 'Turtle', 'Breakfast', 'Penguin', 'Monkey', 'Castle', 'Elephant', 'Bicycle', 'Butterfly', 'Rainbow', 'Dinosaur'],
+        '3': ['Miscellaneous', 'Mississippi', 'Encyclopedia', 'Rhinoceros', 'Hippopotamus', 'Thermometer', 'Pterodactyl', 'Unbelievable', 'Extraordinary', 'Photosynthesis', 'Magniloquent', 'Ambidextrous'],
+    },
+    'es-ES': {
+        '1': ['Manzana', 'Gato', 'Perro', 'Sol', 'Luna', 'Árbol', 'Coche', 'Libro', 'Pez', 'Mango'],
+        '2': ['Amarillo', 'Ventana', 'Feliz', 'Tortuga', 'Desayuno', 'Pingüino', 'Mariposa', 'Arcoíris', 'Elefante', 'Bicicleta'],
+        '3': ['Enciclopedia', 'Extraordinario', 'Hipopótamo', 'Termómetro', 'Responsabilidad', 'Pronunciación', 'Arquitectura', 'Fotografía'],
+    },
+    'de-DE': {
+        '1': ['Apfel', 'Katze', 'Hund', 'Sonne', 'Mond', 'Baum', 'Auto', 'Buch', 'Fisch', 'Kuchen'],
+        '2': ['Gelb', 'Fenster', 'Frühstück', 'Schildkröte', 'Pinguin', 'Schmetterling', 'Regenbogen', 'Elefant', 'Fahrrad'],
+        '3': ['Enzyklopädie', 'Außergewöhnlich', 'Hippopotamus', 'Thermometer', 'Aussprache', 'Verantwortung', 'Wissenschaft'],
+    },
+    'hi-IN': {
+        '1': ['सेब', 'बिल्ली', 'कुत्ता', 'सूरज', 'चाँद', 'पेड़', 'गाड़ी', 'किताब', 'मछली', 'दूध'],
+        '2': ['पीला', 'खिड़की', 'खुश', 'कछुआ', 'नाश्ता', 'तितली', 'इंद्रधनुष', 'हाथी', 'साइकिल'],
+        '3': ['विश्वकोश', 'असाधारण', 'उच्चारण', 'जिम्मेदारी', 'पर्यावरण', 'विज्ञान', 'संविधान'],
+    },
 };
 
 export default function VocabTestScreen() {
@@ -18,6 +36,8 @@ export default function VocabTestScreen() {
     const insets = useSafeAreaInsets();
     const params = useLocalSearchParams();
     const levelId = params.level as string || '1';
+    const languageCode = (params.languageCode as string) || 'en-US';
+    const languageLabel = (params.languageLabel as string) || 'English';
 
     const [targetWord, setTargetWord] = useState('');
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -34,6 +54,8 @@ export default function VocabTestScreen() {
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const resultScaleAnim = useRef(new Animated.Value(0.5)).current;
     const resultOpacityAnim = useRef(new Animated.Value(0)).current;
+    const activeRecordingRef = useRef<Audio.Recording | null>(null);
+    const preparingRecordingRef = useRef(false);
 
     useEffect(() => {
         pickWord();
@@ -43,20 +65,35 @@ export default function VocabTestScreen() {
             allowsRecordingIOS: true,
             playsInSilentModeIOS: true,
         });
+        return () => {
+            Speech.stop();
+            const rec = activeRecordingRef.current;
+            activeRecordingRef.current = null;
+            if (rec) {
+                rec.stopAndUnloadAsync().catch(() => {});
+            }
+        };
     }, []);
 
     const pickWord = () => {
-        const words = LEVEL_WORDS[levelId] || LEVEL_WORDS['1'];
+        const byLanguage = LEVEL_WORDS[languageCode] || LEVEL_WORDS['en-US'];
+        const words = byLanguage[levelId] || byLanguage['1'];
         const w = words[Math.floor(Math.random() * words.length)];
         setTargetWord(w);
         setShowResult(false);
         setIsProcessing(false);
+        Speech.stop();
+        Speech.speak(w, { language: languageCode, rate: 0.9, pitch: 1.0 });
     };
 
     const startRecording = async () => {
+        if (preparingRecordingRef.current || activeRecordingRef.current || isRecording || isProcessing) {
+            return;
+        }
+
+        preparingRecordingRef.current = true;
         try {
             setShowResult(false);
-            setIsRecording(true);
 
             // Start pulse animation
             Animated.loop(
@@ -66,40 +103,68 @@ export default function VocabTestScreen() {
                 ])
             ).start();
 
-            const { recording: newRec } = await Audio.Recording.createAsync(
-                Audio.RecordingOptionsPresets.HIGH_QUALITY
-            );
+            const permission = await Audio.requestPermissionsAsync();
+            if (permission.status !== 'granted') {
+                throw new Error('Microphone permission denied.');
+            }
+
+            const newRec = new Audio.Recording();
+            await newRec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+            await newRec.startAsync();
+
+            activeRecordingRef.current = newRec;
             setRecording(newRec);
+            setIsRecording(true);
         } catch (err) {
             console.error('Failed to start recording', err);
             setIsRecording(false);
+            const rec = activeRecordingRef.current;
+            activeRecordingRef.current = null;
+            if (rec) {
+                await rec.stopAndUnloadAsync().catch(() => {});
+            }
+            pulseAnim.stopAnimation();
+            pulseAnim.setValue(1);
+            setFeedback('Microphone failed to start. Please try again.');
+            setShowResult(true);
+            showResultAnim();
+        } finally {
+            preparingRecordingRef.current = false;
         }
     };
 
     const stopRecording = async () => {
+        if (preparingRecordingRef.current) return;
+
         setIsRecording(false);
         pulseAnim.stopAnimation();
         pulseAnim.setValue(1);
 
-        if (!recording) return;
+        const rec = activeRecordingRef.current || recording;
+        if (!rec) return;
+
+        activeRecordingRef.current = null;
+        setRecording(null);
 
         try {
-            await recording.stopAndUnloadAsync();
-            const uri = recording.getURI();
-            setRecording(null);
+            await rec.stopAndUnloadAsync();
+            const uri = rec.getURI();
 
             if (uri) {
                 processAudio(uri);
             }
         } catch (err) {
             console.error('Failed to stop recording', err);
+            setFeedback('Could not process recording. Please try again.');
+            setShowResult(true);
+            showResultAnim();
         }
     };
 
     const processAudio = async (uri: string) => {
         setIsProcessing(true);
         try {
-            const result = await api.checkPronunciation(targetWord, uri);
+            const result = await api.checkPronunciation(targetWord, uri, languageCode);
             setIsCorrect(result.is_correct);
             setFeedback(result.feedback);
             setPtsEarned(result.points_earned);
@@ -145,7 +210,7 @@ export default function VocabTestScreen() {
                         <ChevronLeft color="#FFF" size={28} />
                     </TouchableOpacity>
                     <View style={styles.levelBadge}>
-                        <Text style={styles.levelBadgeTxt}>LEVEL {levelId}</Text>
+                        <Text style={styles.levelBadgeTxt}>LEVEL {levelId} • {languageLabel}</Text>
                     </View>
                 </View>
 

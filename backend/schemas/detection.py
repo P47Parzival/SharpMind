@@ -61,6 +61,7 @@ class UserStatsResponse(BaseModel):
 class PronunciationRequest(BaseModel):
     target_word: str
     audio_base64: str
+    language_code: str = "en-US"
 
 
 class PronunciationResponse(BaseModel):

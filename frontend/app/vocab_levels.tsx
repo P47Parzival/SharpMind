@@ -35,6 +35,13 @@ const LEVELS = [
   }
 ];
 
+const LANGUAGES = [
+  { label: 'English', code: 'en-US' },
+  { label: 'Spanish', code: 'es-ES' },
+  { label: 'German', code: 'de-DE' },
+  { label: 'Hindi', code: 'hi-IN' },
+];
+
 // ─── Floating Emoji Particle ──────────────────────────────────────────────────
 function FloatEmoji({ style, duration, size, emoji, floatRange = 14 }: { style?: any; duration: number; size: number; emoji: string; floatRange?: number; }) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -140,6 +147,7 @@ const cardStyles = StyleSheet.create({
 export default function VocabLevelsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [selectedLanguage, setSelectedLanguage] = React.useState(LANGUAGES[0]);
 
   return (
     <View style={styles.container}>
@@ -180,6 +188,31 @@ export default function VocabLevelsScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.languageBox}>
+          <Text style={styles.languageTitle}>Choose Practice Language</Text>
+          <View style={styles.languageRow}>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageChip,
+                  selectedLanguage.code === lang.code && styles.languageChipActive,
+                ]}
+                onPress={() => setSelectedLanguage(lang)}
+              >
+                <Text
+                  style={[
+                    styles.languageChipTxt,
+                    selectedLanguage.code === lang.code && styles.languageChipTxtActive,
+                  ]}
+                >
+                  {lang.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.infoBox}>
           <View style={styles.infoIconBox}>
              <Text style={styles.infoIconEmoji}>💡</Text>
@@ -194,7 +227,16 @@ export default function VocabLevelsScreen() {
             <ToyLevelCard
               key={lvl.id}
               lvl={lvl}
-              onPress={() => router.push({ pathname: '/vocab_test', params: { level: lvl.id } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/vocab_test',
+                  params: {
+                    level: lvl.id,
+                    languageCode: selectedLanguage.code,
+                    languageLabel: selectedLanguage.label,
+                  },
+                })
+              }
               delay={100 + idx * 100}
             />
           ))}
@@ -220,6 +262,27 @@ const styles = StyleSheet.create({
   curveBg: { position: "absolute", bottom: 0, left: -20, right: -20, height: 60, backgroundColor: "#F0EBF8", borderTopLeftRadius: 36, borderTopRightRadius: 36 },
   scroll: { flex: 1, backgroundColor: "#F0EBF8" },
   scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 60 },
+  languageBox: {
+    backgroundColor: 'rgba(139, 0, 255, 0.08)',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 0, 255, 0.15)',
+  },
+  languageTitle: { fontSize: 14, fontWeight: '900', color: '#4A0099', marginBottom: 8 },
+  languageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  languageChip: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#B79BDE',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  languageChipActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  languageChipTxt: { color: '#4A0099', fontSize: 12, fontWeight: '800' },
+  languageChipTxtActive: { color: '#FFFFFF' },
   infoBox: { flexDirection: "row", backgroundColor: "rgba(139, 0, 255, 0.08)", borderRadius: 20, padding: 16, marginBottom: 24, alignItems: "center", gap: 12, borderWidth: 1, borderColor: "rgba(139, 0, 255, 0.15)" },
   infoIconBox: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   infoIconEmoji: { fontSize: 20 },
