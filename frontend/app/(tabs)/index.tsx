@@ -328,200 +328,207 @@ export default function HomeScreen() {
       {/* ── Subtle radial glow at center-top ── */}
       <View style={styles.radialGlow} />
 
-      {/* ── Header ── */}
-      <View style={styles.headerOuter}>
-        {/* Background blobs */}
-        <GlowBlob color="#FF4DB8" size={180} style={{ top: -50, right: -50 }} duration={3000} />
-        <GlowBlob color="#FFD93D" size={100} style={{ top: 40, left: -20 }} duration={2600} />
-        <GlowBlob color="#3DDDFF" size={80} style={{ bottom: 0, right: 60 }} duration={2200} />
-        <GlowBlob color="#A855F7" size={130} style={{ bottom: -30, left: 80 }} duration={3400} />
-
-        {/* Floating emoji confetti */}
-        <FloatEmoji emoji="⭐" size={22} style={{ top: 70, left: 18 }} duration={2000} floatRange={12} />
-        <FloatEmoji emoji="🌙" size={16} style={{ top: 120, right: 24 }} duration={2600} floatRange={16} />
-        <FloatEmoji emoji="✨" size={14} style={{ top: 55, right: 75 }} duration={1800} floatRange={10} />
-        <FloatEmoji emoji="🌈" size={18} style={{ top: 160, left: 55 }} duration={3000} floatRange={14} />
-        <FloatEmoji emoji="💫" size={13} style={{ top: 90, right: 130 }} duration={2300} floatRange={8} />
-
-        <Animated.View style={{ transform: [{ translateY: headerAnim }], opacity: headerOpacity }}>
-
-          {/* ── Greeting Row ── */}
-          <View style={styles.greetingRow}>
-            {/* Left: greeting text */}
-            <View style={styles.greetingTextBlock}>
-              <View style={styles.heyPill}>
-                <Text style={styles.heyPillTxt}>👋 Hello, Explorer!</Text>
-              </View>
-              <Text style={styles.greeting}>Ready to{"\n"}
-                <Text style={styles.greetingAccent}>Have Fun? 🎉</Text>
-              </Text>
-            </View>
-
-            {/* Right: Avatar with orbiting ring */}
-            <Animated.View style={[styles.avatarOuter, { transform: [{ translateY: bannerTranslateY }] }]}>
-              {/* Orbiting dot ring */}
-              <View style={styles.orbitRing1} />
-              <View style={styles.orbitRing2} />
-              <LinearGradient
-                colors={["#FFE040", "#FF8C00", "#FF4500"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.avatarGrad}
-              >
-                <Text style={{ fontSize: 32 }}>🧒</Text>
-              </LinearGradient>
-              {/* Level badge */}
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelTxt}>Lv 1</Text>
-              </View>
-            </Animated.View>
-          </View>
-
-        </Animated.View>
-      </View>
-
-      {/* ── Curved divider ── */}
-      <View style={styles.curveContainer}>
-        <View style={styles.curveBg} />
-      </View>
-
-      {/* ── Scrollable Content ── */}
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Stat Badges (scrolls with content) ── */}
-        <View style={styles.statsRowScroll}>
-          <StatBadge
-            emoji="⭐"
-            value={stats.totalPoints}
-            label="Points"
-            bgColor="#FF8C00"
-            borderColor="#CC5500"
-            delay={80}
-          />
-          <StatBadge
-            emoji="🔥"
-            value={stats.streakCount}
-            label="Streak"
-            bgColor="#E5007F"
-            borderColor="#A30060"
-            delay={160}
-          />
-          <StatBadge
-            emoji="🔍"
-            value={stats.objectsDetected}
-            label="Scanned"
-            bgColor="#009DAA"
-            borderColor="#007080"
-            delay={240}
-          />
+        {/* ── Header ── */}
+        <View style={styles.headerOuter}>
+          {/* Background blobs */}
+          <GlowBlob color="#FF4DB8" size={180} style={{ top: -50, right: -50 }} duration={3000} />
+          <GlowBlob color="#FFD93D" size={100} style={{ top: 40, left: -20 }} duration={2600} />
+          <GlowBlob color="#3DDDFF" size={80} style={{ bottom: 0, right: 60 }} duration={2200} />
+          <GlowBlob color="#A855F7" size={130} style={{ bottom: -30, left: 80 }} duration={3400} />
+
+          {/* Floating emoji confetti */}
+          <FloatEmoji emoji="⭐" size={22} style={{ top: 70, left: 18 }} duration={2000} floatRange={12} />
+          <FloatEmoji emoji="🌙" size={16} style={{ top: 120, right: 24 }} duration={2600} floatRange={16} />
+          <FloatEmoji emoji="✨" size={14} style={{ top: 55, right: 75 }} duration={1800} floatRange={10} />
+          <FloatEmoji emoji="🌈" size={18} style={{ top: 160, left: 55 }} duration={3000} floatRange={14} />
+          <FloatEmoji emoji="💫" size={13} style={{ top: 90, right: 130 }} duration={2300} floatRange={8} />
+
+          <Animated.View style={{ transform: [{ translateY: headerAnim }], opacity: headerOpacity }}>
+
+            {/* ── Greeting Row ── */}
+            <View style={styles.greetingRow}>
+              {/* Left: greeting text */}
+              <View style={styles.greetingTextBlock}>
+                <View style={styles.heyPill}>
+                  <Text style={styles.heyPillTxt}>👋 Hello, Explorer!</Text>
+                </View>
+                <Text style={styles.greeting}>Ready to{"\n"}
+                  <Text style={styles.greetingAccent}>Have Fun? 🎉</Text>
+                </Text>
+              </View>
+
+              {/* Right: Avatar with orbiting ring */}
+              <Animated.View style={[styles.avatarOuter, { transform: [{ translateY: bannerTranslateY }] }]}>
+                {/* Orbiting dot ring */}
+                <View style={styles.orbitRing1} />
+                <View style={styles.orbitRing2} />
+                <LinearGradient
+                  colors={["#FFE040", "#FF8C00", "#FF4500"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.avatarGrad}
+                >
+                  <Text style={{ fontSize: 32 }}>🧒</Text>
+                </LinearGradient>
+                {/* Level badge */}
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelTxt}>Lv 1</Text>
+                </View>
+              </Animated.View>
+            </View>
+
+          </Animated.View>
         </View>
 
-        {/* Section title */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>🎮 Pick Your Adventure</Text>
-          <View style={styles.sectionPill}>
-            <Text style={styles.sectionPillTxt}>7 Games</Text>
-          </View>
+        {/* ── Curved divider ── */}
+        <View style={styles.curveContainer}>
+          <View style={styles.curveBg} />
         </View>
 
-        {/* Grid */}
-        <View style={styles.gridContainer}>
-          <GridCard
-            emoji="📷"
-            title="Magic Camera"
-            gradientColors={["#A855F7", "#7C3AED", "#5B21B6"]}
-            shadowColor="#4C1D95"
-            onPress={() => router.push("/(tabs)/camera")}
-            delay={80}
-          />
-          <GridCard
-            emoji="🎯"
-            title="Treasure Hunt"
-            gradientColors={["#FF6B6B", "#FF3E88", "#C2006F"]}
-            shadowColor="#9D003F"
-            onPress={() => router.push("/finder")}
-            delay={140}
-          />
-          <GridCard
-            emoji="🏝️"
-            title="Night Island"
-            gradientColors={["#00D4FF", "#0094FF", "#0053C8"]}
-            shadowColor="#0035A0"
-            onPress={() => router.push("/lingo-island" as any)}
-            badge="NEW 3D"
-            delay={200}
-            isSpecial
-          />
-          <GridCard
-            emoji="🗣️"
-            title="Speak Words"
-            gradientColors={["#FFD93D", "#FFA500", "#E07B00"]}
-            shadowColor="#B85E00"
-            onPress={() => router.push("/vocab_levels")}
-            delay={260}
-          />
-          <GridCard
-            emoji="🏆"
-            title="Trophy Room"
-            gradientColors={["#2ECC71", "#00A86B", "#007A50"]}
-            shadowColor="#005A38"
-            onPress={() => router.push("/(tabs)/profile")}
-            delay={320}
-          />
-          <GridCard
-            emoji="🎁"
-            title="Prize Shop"
-            gradientColors={["#FF66CC", "#CC00FF", "#8800BB"]}
-            shadowColor="#660099"
-            onPress={() => router.push("/redeem")}
-            delay={380}
-          />
-          <GridCard
-            emoji="🥽"
-            title="3D Magic"
-            gradientColors={["#43E8D8", "#00BFFF", "#0077CC"]}
-            shadowColor="#005599"
-            onPress={() => router.push("/ar-models")}
-            delay={440}
-          />
-        </View>
-
-        {/* ── Daily Tip Banner ── */}
-        <LinearGradient
-          colors={["#FFF8C5", "#FFF0A0", "#FFDF60"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={tipStyles.card}
+        {/* ── Scrollable Content ── */}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Decorative left stripe */}
-          <View style={tipStyles.leftStripe} />
+          {/* ── Stat Badges (scrolls with content) ── */}
+          <View style={styles.statsRowScroll}>
+            <StatBadge
+              emoji="⭐"
+              value={stats.totalPoints}
+              label="Points"
+              bgColor="#FF8C00"
+              borderColor="#CC5500"
+              delay={80}
+            />
+            <StatBadge
+              emoji="🔥"
+              value={stats.streakCount}
+              label="Streak"
+              bgColor="#E5007F"
+              borderColor="#A30060"
+              delay={160}
+            />
+            <StatBadge
+              emoji="🔍"
+              value={stats.objectsDetected}
+              label="Scanned"
+              bgColor="#009DAA"
+              borderColor="#007080"
+              delay={240}
+            />
+          </View>
 
-          <View style={tipStyles.inner}>
-            <View style={tipStyles.topRow}>
-              <View style={tipStyles.bulbCircle}>
-                <Text style={{ fontSize: 22 }}>💡</Text>
-              </View>
-              <View>
-                <Text style={tipStyles.eyebrow}>TIP OF THE DAY</Text>
-                <Text style={tipStyles.title}>Did you know?</Text>
-              </View>
-            </View>
-            <Text style={tipStyles.text}>
-              Learning new words every day helps your brain grow stronger! Try
-              scanning 5 objects today to earn bonus points! 🎉
-            </Text>
-            <View style={tipStyles.sparkleRow}>
-              {["⭐", "🌈", "🚀", "✨", "🎯"].map((s, i) => (
-                <Text key={i} style={tipStyles.sparkle}>{s}</Text>
-              ))}
+          {/* Section title */}
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>🎮 Pick Your Adventure</Text>
+            <View style={styles.sectionPill}>
+              <Text style={styles.sectionPillTxt}>7 Games</Text>
             </View>
           </View>
-        </LinearGradient>
 
-        <View style={{ height: 120 }} />
+          {/* Grid */}
+          <View style={styles.gridContainer}>
+            <GridCard
+              emoji="📷"
+              title="Magic Camera"
+              gradientColors={["#A855F7", "#7C3AED", "#5B21B6"]}
+              shadowColor="#4C1D95"
+              onPress={() => router.push("/(tabs)/camera")}
+              delay={80}
+            />
+            <GridCard
+              emoji="🎯"
+              title="Treasure Hunt"
+              gradientColors={["#FF6B6B", "#FF3E88", "#C2006F"]}
+              shadowColor="#9D003F"
+              onPress={() => router.push("/finder")}
+              delay={140}
+            />
+            <GridCard
+              emoji="🏝️"
+              title="Night Island"
+              gradientColors={["#00D4FF", "#0094FF", "#0053C8"]}
+              shadowColor="#0035A0"
+              onPress={() => router.push("/lingo-island" as any)}
+              badge="NEW 3D"
+              delay={200}
+              isSpecial
+            />
+            <GridCard
+              emoji="🗣️"
+              title="Speak Words"
+              gradientColors={["#FFD93D", "#FFA500", "#E07B00"]}
+              shadowColor="#B85E00"
+              onPress={() => router.push("/vocab_levels")}
+              delay={260}
+            />
+            <GridCard
+              emoji="🏆"
+              title="Trophy Room"
+              gradientColors={["#2ECC71", "#00A86B", "#007A50"]}
+              shadowColor="#005A38"
+              onPress={() => router.push("/(tabs)/profile")}
+              delay={320}
+            />
+            <GridCard
+              emoji="🎁"
+              title="Prize Shop"
+              gradientColors={["#FF66CC", "#CC00FF", "#8800BB"]}
+              shadowColor="#660099"
+              onPress={() => router.push("/redeem")}
+              delay={380}
+            />
+            <GridCard
+              emoji="🥽"
+              title="3D Magic"
+              gradientColors={["#43E8D8", "#00BFFF", "#0077CC"]}
+              shadowColor="#005599"
+              onPress={() => router.push("/ar-models")}
+              delay={440}
+            />
+          </View>
+
+          {/* ── Daily Tip Banner ── */}
+          <LinearGradient
+            colors={["#FFF8C5", "#FFF0A0", "#FFDF60"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={tipStyles.card}
+          >
+            {/* Decorative left stripe */}
+            <View style={tipStyles.leftStripe} />
+
+            <View style={tipStyles.inner}>
+              <View style={tipStyles.topRow}>
+                <View style={tipStyles.bulbCircle}>
+                  <Text style={{ fontSize: 22 }}>💡</Text>
+                </View>
+                <View>
+                  <Text style={tipStyles.eyebrow}>TIP OF THE DAY</Text>
+                  <Text style={tipStyles.title}>Did you know?</Text>
+                </View>
+              </View>
+              <Text style={tipStyles.text}>
+                Learning new words every day helps your brain grow stronger! Try
+                scanning 5 objects today to earn bonus points! 🎉
+              </Text>
+              <View style={tipStyles.sparkleRow}>
+                {["⭐", "🌈", "🚀", "✨", "🎯"].map((s, i) => (
+                  <Text key={i} style={tipStyles.sparkle}>{s}</Text>
+                ))}
+              </View>
+            </View>
+          </LinearGradient>
+
+          <View style={{ height: 120 }} />
+          {/* Deep bounce extension area */}
+          <View style={{ position: "absolute", bottom: -800, left: 0, right: 0, height: 800, backgroundColor: "#F0EBF8" }} />
+        </View>
       </ScrollView>
     </View>
   );
