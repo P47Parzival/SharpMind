@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import {
@@ -10,7 +10,8 @@ import {
   ViroNode,
   ViroSkyBox
 } from '../components/ViroSafe';
-import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut, Moon, Sun, ArrowUp, ArrowDown } from 'lucide-react-native';
+import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut, Moon, Sun, ArrowUp, ArrowDown, Volume2 } from 'lucide-react-native';
+import { speakText, stopSpeaking } from '../services/audio';
 
 const HeartSceneAR = (props: any) => {
   const { isLocked, controlRotation, controlTilt, controlScale, modelSource, isBlackout } = props.sceneNavigator.viroAppProps;
@@ -76,6 +77,11 @@ const HeartSceneAR = (props: any) => {
   );
 };
 
+const SPEECH_LANGUAGES = [
+  { label: 'English', code: 'en-US' },
+  { label: 'Hindi', code: 'hi-IN' },
+];
+
 export default function ARViewerScreen() {
   const router = useRouter();
   const { model } = useLocalSearchParams();
@@ -88,13 +94,42 @@ export default function ARViewerScreen() {
     'full-body': require("../glbfiles/male_full_body_ecorche.glb"),
     earth: require("../glbfiles/earth.glb"),
   };
+  const modelNarrationMap: Record<string, string> = {
+    heart: 'This is the human heart. It pumps blood to every part of your body and keeps you alive every second.',
+    body: 'This is the upper body anatomy model. You can explore important structures like ribs, lungs, and major organs in the chest.',
+    'full-body': 'This is a full body ecorche model. It shows muscles across the whole body so you can study how the human body is built for movement.',
+    earth: 'This is planet Earth. Most of Earth is covered by water, and it is the only known planet that supports life.',
+  };
+  const modelNarrationHindiMap: Record<string, string> = {
+    heart: 'यह मानव हृदय है। यह आपके पूरे शरीर में रक्त पहुंचाता है और आपको हर पल जीवित रखता है।',
+    body: 'यह ऊपरी शरीर की एनाटॉमी का मॉडल है। इसमें आप पसलियां, फेफड़े और छाती के महत्वपूर्ण अंग देख सकते हैं।',
+    'full-body': 'यह पूरे शरीर की मांसपेशियों का मॉडल है। इससे आप समझ सकते हैं कि हमारा शरीर कैसे बना है और कैसे चलता है।',
+    earth: 'यह पृथ्वी ग्रह का मॉडल है। पृथ्वी का अधिकतर भाग पानी से ढका है और यही एक ज्ञात ग्रह है जहां जीवन संभव है।',
+  };
   const modelSource = modelSourceMap[modelKey] ?? modelSourceMap.heart;
+  const modelNarration = modelNarrationMap[modelKey] ?? modelNarrationMap.heart;
+  const modelNarrationHindi = modelNarrationHindiMap[modelKey] ?? modelNarrationHindiMap.heart;
 
   const [isLocked, setIsLocked] = useState(false);
   const [isBlackout, setIsBlackout] = useState(false);
   const [controlRotation, setControlRotation] = useState(0);
   const [controlTilt, setControlTilt] = useState(0);
   const [controlScale, setControlScale] = useState(1);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+
+  useEffect(() => {
+    // Stop speech if user switches model while narration is active.
+    stopSpeaking();
+    return () => {
+      stopSpeaking();
+    };
+  }, [modelKey]);
+
+  const handleSpeak = (languageCode: string) => {
+    const narration = languageCode === 'hi-IN' ? modelNarrationHindi : modelNarration;
+    speakText(narration, languageCode);
+    setShowLanguagePicker(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -111,27 +146,55 @@ export default function ARViewerScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color="#fff" size={24} />
+          <ArrowLeft color="#fff" size={20} />
           <Text style={styles.backTxt}>Exit</Text>
         </TouchableOpacity>
 
         <View style={styles.actionsGroup}>
           <TouchableOpacity
+            style={styles.lockBtn}
+            onPress={() => setShowLanguagePicker(v => !v)}
+          >
+            <Volume2 color="#fff" size={17} />
+            <Text style={styles.backTxt}>Voice</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.lockBtn, isBlackout && styles.lockBtnActive]}
             onPress={() => setIsBlackout(!isBlackout)}
           >
-            {isBlackout ? <Moon color="#fff" size={20} /> : <Sun color="#fff" size={20} />}
+            {isBlackout ? <Moon color="#fff" size={17} /> : <Sun color="#fff" size={17} />}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.lockBtn, isLocked && styles.lockBtnActive]}
             onPress={() => setIsLocked(!isLocked)}
           >
-            {isLocked ? <Lock color="#fff" size={20} /> : <Unlock color="#fff" size={20} />}
-            <Text style={styles.backTxt}>{isLocked ? 'Locked' : 'Unlocked'}</Text>
+            {isLocked ? <Lock color="#fff" size={17} /> : <Unlock color="#fff" size={17} />}
+            <Text style={styles.backTxt}>{isLocked ? 'Locked' : 'Unlock'}</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {showLanguagePicker && (
+        <View style={styles.langPickerCard}>
+          <Text style={styles.langPickerTitle}>Choose narration language</Text>
+          <View style={styles.langPickerRow}>
+            {SPEECH_LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={styles.langBtn}
+                onPress={() => handleSpeak(lang.code)}
+              >
+                <Text style={styles.langBtnText}>{lang.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={styles.langCancelBtn} onPress={() => setShowLanguagePicker(false)}>
+            <Text style={styles.langCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* 2D On-Screen Controls for Small Phones */}
       <View style={styles.hudContainer}>
@@ -173,22 +236,72 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   arView: { flex: 1 },
   header: {
-    position: 'absolute', top: 50, left: 16, right: 16,
+    position: 'absolute', top: 50, left: 12, right: 12,
     flexDirection: 'row', justifyContent: 'space-between', zIndex: 10,
   },
-  actionsGroup: { flexDirection: 'row', gap: 8 },
+  actionsGroup: { flexDirection: 'row', gap: 5 },
   backBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#6C63FF',
-    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 2, borderColor: '#A855F7',
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, borderWidth: 2, borderColor: '#A855F7',
     shadowColor: '#4C1D95', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 6
   },
   lockBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF8C00',
-    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 2, borderColor: '#FFD93D',
+    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 18, borderWidth: 2, borderColor: '#FFD93D',
     shadowColor: '#B85E00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 6
   },
   lockBtnActive: { backgroundColor: '#E63946', borderColor: '#FF6B6B', shadowColor: '#9D003F' },
-  backTxt: { color: '#fff', marginLeft: 8, fontSize: 16, fontWeight: '900' },
+  backTxt: { color: '#fff', marginLeft: 5, fontSize: 13, fontWeight: '900' },
+
+  langPickerCard: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    right: 20,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: 'rgba(13, 0, 31, 0.96)',
+    borderWidth: 2,
+    borderColor: '#4A0099',
+    zIndex: 20,
+  },
+  langPickerTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  langPickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  langBtn: {
+    backgroundColor: '#00BFFF',
+    borderWidth: 2,
+    borderColor: '#43E8D8',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  langBtnText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 14,
+  },
+  langCancelBtn: {
+    alignSelf: 'center',
+    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  langCancelText: {
+    color: '#FFD93D',
+    fontSize: 14,
+    fontWeight: '800',
+  },
 
   hudContainer: {
     position: 'absolute', bottom: 40, left: 20, right: 20,
