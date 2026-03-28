@@ -3,9 +3,8 @@
 An integrated, gamified educational suite featuring real-time AI Object Detection, Voice-Coach capabilities, and Immersive 3D AR learning modules tailored for intuitive discovery.
 
 <p align="center">
-  <img src="assets/home.jpeg" width="30%" />
-  <img src="assets/profile.jpeg" width="30%" />
-  <img src="assets/3d_game.jpeg" width="30%" />
+  <img src="assets/home.jpeg" width="45%" />
+  <img src="assets/profile.jpeg" width="45%" />
 </p>
 
 **React Native** • **Expo** • **FastAPI** • **ViroReact** • **Python**
@@ -56,6 +55,13 @@ Alongside the AI functionality, SharpMind acts as a premium gamified application
    Tracks milestones dynamically. At full completion, it securely generates an authentic, landscape A4 PDF Certificate entirely natively using HTML-to-PDF (`expo-print`) adorned with gold seals and signatures.
 
 ---
+
+## 🏝️ Custom 3D Night Island
+To push the bounds of interactive learning, we've developed our own standalone 3D exploratory game layer natively integrated into the app.
+
+<p align="center">
+  <img src="assets/3d_game.jpeg" width="70%" />
+</p>
 
 ## 🎯 System Overview
 
@@ -120,4 +126,4 @@ npx expo start
 
 - **UI Architecture:** Custom "Deep Space 3D Toy" aesthetic built exclusively for optimal kid-friendly learning UX.
 - **Dependencies:** React Native (MIT), FastAPI (MIT), ViroReact (MIT).
-- **Authors:** [@P47Parzival](https://github.com/P47Parzival) (Dhruv Mali) & [@siddhant4357](https://github.com/siddhant4357) (Siddhant Sankesara).
+- **Made with ❤️ by Team D9THC.**
