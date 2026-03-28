@@ -43,7 +43,11 @@ Alongside the AI functionality, SharpMind acts as a premium gamified application
 1. **"Magic Camera" & Treasure Hunt (Object Detection)**
    Modular toolkit interface hooked into Expo Camera. It challenges users to find real-world objects in their environment, utilizing object classification to grant points instantly.
    <br/><br/>
-   <video autoplay loop muted controls src="./assets/object_detection.mp4" width="100%"></video>
+
+
+https://github.com/user-attachments/assets/21ced729-ee4c-4219-91e8-e041df0532de
+
+
 
 2. **Immersive Dashboard**
    A unified space-themed `(tabs)/index.tsx` screen combining dynamic stat tracking, bouncing layout physics, and floating emoji geometries to reward user progression.
