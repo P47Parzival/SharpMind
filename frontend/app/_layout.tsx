@@ -4,6 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import '../global.css';
 import Toast from 'react-native-toast-message';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  'THREE.WARNING: Multiple instances of Three.js',
+  '[expo-av]: Expo AV has been deprecated',
+]);
 
 export const unstable_settings = {
   anchor: '(tabs)',

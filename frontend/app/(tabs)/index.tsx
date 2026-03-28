@@ -123,7 +123,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => router.push("/vocab_list")}
+          onPress={() => router.push("/vocab_levels")}
           activeOpacity={0.85}
         >
           <View style={[styles.actionIcon, { backgroundColor: "#FFF4E5" }]}>
@@ -189,6 +189,23 @@ export default function HomeScreen() {
             <Text style={styles.actionTitle}>🛍️ Redeem Points</Text>
             <Text style={styles.actionDescription}>
               Exchange your points for awesome digital toys and treats!
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* AR Specialty */}
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => router.push("/ar-viewer")}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: "#E3FEF7" }]}>
+            <Text style={{ fontSize: 32 }}>🥽</Text>
+          </View>
+          <View style={styles.actionText}>
+            <Text style={styles.actionTitle}>🧬 AR Specialty</Text>
+            <Text style={styles.actionDescription}>
+              Project realistic 3D human anatomy models right into your living room!
             </Text>
           </View>
         </TouchableOpacity>
