@@ -1,25 +1,38 @@
 import { Tabs } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { Camera, Home, User } from "lucide-react-native";
-import { COLORS } from "../../constants/app";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: "#00E5FF", // Cyber Cyan
+        tabBarInactiveTintColor: "#8B72BE", // Muted dark purple
+        tabBarShowLabel: true,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
+        tabBarBackground: () => (
+          <View style={styles.glassBackground}>
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+            <LinearGradient
+              colors={["rgba(255,255,255,0.08)", "rgba(255,255,255,0.0)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        ),
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Home color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <Home color={color} size={22} strokeWidth={focused ? 3 : 2} style={styles.iconShift} />
           ),
         }}
       />
@@ -27,20 +40,27 @@ export default function TabLayout() {
         name="camera"
         options={{
           title: "Detect",
-          tabBarIcon: ({ color, size }) => (
-            <View style={styles.cameraTabIcon}>
-              <Camera color="#FFFFFF" size={28} />
+          tabBarLabel: () => null,
+          tabBarIcon: () => (
+            <View style={styles.cameraWrapper}>
+              <LinearGradient
+                colors={["#FF007A", "#7928CA"]} // Premium Magenta/Purple Dribbble aesthetic
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.cameraCircle}
+              >
+                <Camera color="#FFFFFF" size={26} strokeWidth={2.5} />
+              </LinearGradient>
             </View>
           ),
-          tabBarLabel: () => null,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <User color={color} size={22} strokeWidth={focused ? 3 : 2} style={styles.iconShift} />
           ),
         }}
       />
@@ -50,36 +70,54 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 0,
-    elevation: 20,
-    shadowColor: "#6C63FF",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    height: 70,
-    paddingBottom: 8,
-    paddingTop: 8,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     position: "absolute",
+    bottom: Platform.OS === "ios" ? 30 : 20,
+    left: 20,
+    right: 20,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 0,
+    borderTopWidth: 0,
+    elevation: 0,
+    backgroundColor: "transparent",
+    paddingBottom: Platform.OS === "ios" ? 0 : 0, // Prevent default safe area pushing text out
   },
   tabLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    marginBottom: Platform.OS === 'ios' ? 12 : 10,
   },
-  cameraTabIcon: {
-    backgroundColor: COLORS.primary,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  iconShift: {
+    marginTop: Platform.OS === 'ios' ? 10 : 6,
+  },
+  glassBackground: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 35,
+    overflow: "hidden",
+    backgroundColor: "rgba(10, 2, 20, 0.7)", 
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  cameraWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#1A0533",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    marginTop: Platform.OS === 'ios' ? -5 : 0, // Precisely center the big button
+    shadowColor: "#FF007A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
     elevation: 8,
+  },
+  cameraCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

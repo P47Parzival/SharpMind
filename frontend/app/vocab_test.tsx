@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Audio } from 'expo-av';
 import { Mic, ChevronLeft, Volume2, Trophy, ArrowRight, RefreshCcw } from 'lucide-react-native';
@@ -14,6 +15,7 @@ const LEVEL_WORDS: Record<string, string[]> = {
 
 export default function VocabTestScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const params = useLocalSearchParams();
     const levelId = params.level as string || '1';
 
@@ -30,6 +32,8 @@ export default function VocabTestScreen() {
 
     // Animation
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    const resultScaleAnim = useRef(new Animated.Value(0.5)).current;
+    const resultOpacityAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         pickWord();
@@ -57,7 +61,7 @@ export default function VocabTestScreen() {
             // Start pulse animation
             Animated.loop(
                 Animated.sequence([
-                    Animated.timing(pulseAnim, { toValue: 1.2, duration: 600, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1.25, duration: 600, useNativeDriver: true }),
                     Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true })
                 ])
             ).start();
@@ -99,78 +103,131 @@ export default function VocabTestScreen() {
             setIsCorrect(result.is_correct);
             setFeedback(result.feedback);
             setPtsEarned(result.points_earned);
-            setShowResult(true);
+            showResultAnim();
         } catch (err) {
             console.error('API processing failed', err);
             // Fallback UI gracefully
             setIsCorrect(false);
             setFeedback("Sorry, I couldn't understand that. Please speak louder!");
-            setShowResult(true);
+            showResultAnim();
         } finally {
             setIsProcessing(false);
         }
     };
 
+    const showResultAnim = () => {
+        setShowResult(true);
+        resultScaleAnim.setValue(0.5);
+        resultOpacityAnim.setValue(0);
+        Animated.parallel([
+            Animated.spring(resultScaleAnim, { toValue: 1, tension: 150, friction: 8, useNativeDriver: true }),
+            Animated.timing(resultOpacityAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+        ]).start();
+    };
+
     return (
         <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <ChevronLeft color="#333" size={28} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Level {levelId}</Text>
-                <View style={{ width: 44 }} />
+            
+            {/* Deep space gradient background */}
+            <LinearGradient
+                colors={["#0D001F", "#220050", "#4A0099", "#7B1FD4"]}
+                style={StyleSheet.absoluteFillObject}
+                start={{ x: 0.2, y: 0 }}
+                end={{ x: 0.8, y: 1 }}
+            />
+            <View style={styles.radialGlow} />
+
+            {/* Header Area */}
+            <View style={[styles.headerOuter, { paddingTop: insets.top + 20 }]}>
+                <View style={styles.headerNav}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                        <ChevronLeft color="#FFF" size={28} />
+                    </TouchableOpacity>
+                    <View style={styles.levelBadge}>
+                        <Text style={styles.levelBadgeTxt}>LEVEL {levelId}</Text>
+                    </View>
+                </View>
+
+                <Animated.View style={{ alignItems: "center" }}>
+                    <Text style={styles.headerSubtitle}>Say this word out loud 🎙️</Text>
+                    <View style={styles.wordPill}>
+                        <Text style={styles.targetWord}>{targetWord}</Text>
+                    </View>
+                </Animated.View>
+            </View>
+
+            {/* Curved Divider */}
+            <View style={styles.curveContainer}>
+                <View style={styles.curveBg} />
             </View>
 
             <View style={styles.content}>
-                <Text style={styles.promptLabel}>Say this word out loud:</Text>
-                <Text style={styles.targetWord}>{targetWord}</Text>
-
                 <View style={styles.micArea}>
                     {isProcessing ? (
                         <View style={styles.processingBox}>
-                            <ActivityIndicator size="large" color="#6C63FF" />
-                            <Text style={styles.processingTxt}>AI is listening...</Text>
+                            <View style={styles.spinnerBlob}>
+                                <ActivityIndicator size="large" color="#FFD93D" />
+                            </View>
+                            <Text style={styles.processingTxt}>AI is listening... 🧠</Text>
                         </View>
                     ) : showResult ? (
-                        <View style={[styles.resultCard, isCorrect ? styles.resultSuccess : styles.resultFail]}>
-                            <Text style={styles.resultEmoji}>{isCorrect ? '🎉' : '🤔'}</Text>
-                            <Text style={styles.resultTitle}>{isCorrect ? 'Awesome!' : 'Almost there!'}</Text>
-                            <Text style={styles.resultFeedback}>{feedback}</Text>
-                            {ptsEarned > 0 && (
-                                <View style={styles.ptsBadge}>
-                                    <Trophy size={18} color="#FFD700" />
-                                    <Text style={styles.ptsTxt}>+{ptsEarned} Points!</Text>
-                                </View>
-                            )}
+                        <Animated.View style={[styles.resultCardWrap, { transform: [{ scale: resultScaleAnim }], opacity: resultOpacityAnim }]}>
+                            <View style={[styles.resultShadow, { backgroundColor: isCorrect ? "#008A4D" : "#9D003F" }]} />
+                            <LinearGradient
+                                colors={isCorrect ? ["#2ECC71", "#00A86B", "#007A50"] : ["#FF6B6B", "#FF3E88", "#C2006F"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.resultCard}
+                            >
+                                <LinearGradient colors={["rgba(255,255,255,0.45)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.gloss} />
+                                <View style={styles.dotPattern} />
 
-                            <View style={styles.actionRow}>
-                                <TouchableOpacity style={styles.actionBtnOutline} onPress={() => setShowResult(false)}>
-                                    <RefreshCcw size={20} color={isCorrect ? '#2E7D32' : '#C62828'} />
-                                    <Text style={[styles.actionBtnTxt, { color: isCorrect ? '#2E7D32' : '#C62828' }]}>Retry</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: isCorrect ? '#2E7D32' : '#C62828' }]} onPress={pickWord}>
-                                    <Text style={styles.actionBtnTxtWhite}>Next Word</Text>
-                                    <ArrowRight size={20} color="#FFF" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                                <Text style={styles.resultEmoji}>{isCorrect ? '🎉' : '🤔'}</Text>
+                                <Text style={styles.resultTitle}>{isCorrect ? 'Awesome!' : 'Almost there!'}</Text>
+                                <Text style={styles.resultFeedback}>{feedback}</Text>
+                                {ptsEarned > 0 && (
+                                    <View style={styles.ptsBadge}>
+                                        <Trophy size={18} color="#FFD700" />
+                                        <Text style={styles.ptsTxt}>+{ptsEarned} Points!</Text>
+                                    </View>
+                                )}
+
+                                <View style={styles.actionRow}>
+                                    <TouchableOpacity style={styles.actionBtnOutline} onPress={() => showResultAnim() /* Re-hide result actually handled by pickword, but retry means pick again or try same word? */}>
+                                        <RefreshCcw size={20} color="#FFF" />
+                                        <Text style={styles.actionBtnTxtWhite}>Retry</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.actionBtn} onPress={pickWord}>
+                                        <Text style={styles.actionBtnTxt}>Next Word</Text>
+                                        <ArrowRight size={20} color="#000" />
+                                    </TouchableOpacity>
+                                </View>
+                            </LinearGradient>
+                        </Animated.View>
                     ) : (
-                        <>
-                            <Animated.View style={[styles.micGlow, { transform: [{ scale: pulseAnim }], opacity: isRecording ? 0.4 : 0 }]} />
+                        <View style={{ alignItems: 'center' }}>
+                            <Animated.View style={[styles.micGlow, { transform: [{ scale: pulseAnim }], opacity: isRecording ? 0.3 : 0 }]} />
                             <TouchableOpacity
-                                activeOpacity={0.9}
+                                activeOpacity={1}
                                 onPressIn={startRecording}
                                 onPressOut={stopRecording}
-                                style={[styles.micButton, isRecording && styles.micRecording]}
+                                style={styles.micButtonWrap}
                             >
-                                <Mic size={48} color="#FFF" />
+                                <View style={[styles.micShadow, isRecording && { bottom: -2, height: '98%' }]} />
+                                <LinearGradient 
+                                    colors={isRecording ? ["#FF3E88", "#C2006F"] : ["#FFD93D", "#FFA500"]}
+                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                                    style={[styles.micButton, isRecording && { transform: [{ translateY: 4 }] }]}
+                                >
+                                    <LinearGradient colors={["rgba(255,255,255,0.6)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.gloss} />
+                                    <Mic size={54} color="#FFF" />
+                                </LinearGradient>
                             </TouchableOpacity>
                             <Text style={styles.micInstruction}>
                                 {isRecording ? "Listening... Release to check!" : "Hold to Speak"}
                             </Text>
-                        </>
+                        </View>
                     )}
                 </View>
             </View>
@@ -179,61 +236,49 @@ export default function VocabTestScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 60, paddingHorizontal: 20, paddingBottom: 15,
-        backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EEE',
-    },
-    backButton: {
-        width: 44, height: 44, borderRadius: 22, backgroundColor: '#F5F5F7',
-        alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
-    content: { flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center' },
-    promptLabel: { fontSize: 18, color: '#666', fontWeight: '600', marginBottom: 16 },
-    targetWord: { fontSize: 48, fontWeight: '900', color: '#6C63FF', letterSpacing: 2, textAlign: 'center' },
+    container: { flex: 1, backgroundColor: '#F0EBF8' },
+    radialGlow: { position: "absolute", top: -80, alignSelf: "center", left: "10%", width: 320, height: 320, borderRadius: 160, backgroundColor: "#8B00FF", opacity: 0.35 },
+    headerOuter: { paddingBottom: 40, paddingHorizontal: 22, overflow: "visible", zIndex: 10 },
+    headerNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 },
+    backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.4)" },
+    levelBadge: { backgroundColor: "rgba(0,0,0,0.3)", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+    levelBadgeTxt: { color: "#FFF", fontSize: 13, fontWeight: "900", letterSpacing: 1 },
+    headerSubtitle: { fontSize: 18, color: "rgba(255,255,255,0.9)", fontWeight: "700", marginBottom: 16 },
+    wordPill: { backgroundColor: "#FFFFFF", paddingHorizontal: 32, paddingVertical: 16, borderRadius: 32, borderWidth: 3, borderColor: "#FFD93D", shadowColor: "#FFD93D", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 15, elevation: 8, transform: [{ rotate: "-2deg" }] },
+    targetWord: { fontSize: 44, fontWeight: "900", color: "#6C63FF", letterSpacing: 1, textAlign: "center" },
 
-    micArea: { marginTop: 80, alignItems: 'center', height: 300, justifyContent: 'center', width: '100%' },
-    micButton: {
-        width: 120, height: 120, borderRadius: 60, backgroundColor: '#6C63FF',
-        alignItems: 'center', justifyContent: 'center', zIndex: 10,
-        shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
-    },
-    micRecording: { backgroundColor: '#FF5252', shadowColor: '#FF5252' },
-    micGlow: {
-        position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: '#FF5252', zIndex: 1,
-    },
-    micInstruction: { marginTop: 32, fontSize: 18, fontWeight: '700', color: '#888' },
+    curveContainer: { height: 28, overflow: "visible", zIndex: 5 },
+    curveBg: { position: "absolute", bottom: 0, left: -20, right: -20, height: 60, backgroundColor: "#F0EBF8", borderTopLeftRadius: 36, borderTopRightRadius: 36 },
+
+    content: { flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: "#F0EBF8" },
+
+    micArea: { alignItems: 'center', justifyContent: 'center', width: '100%' },
+    micButtonWrap: { position: "relative", width: 140, height: 140, marginBottom: 20, zIndex: 10 },
+    micShadow: { position: "absolute", bottom: -8, left: 4, right: 4, height: "100%", borderRadius: 70, backgroundColor: "rgba(0,0,0,0.3)" },
+    micButton: { flex: 1, borderRadius: 70, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: "rgba(255,255,255,0.6)", overflow: "hidden" },
+    micGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: '#FFD93D', top: -30, zIndex: 1 },
+    micInstruction: { fontSize: 18, fontWeight: '800', color: '#6C63FF' },
 
     processingBox: { alignItems: 'center', gap: 16 },
-    processingTxt: { fontSize: 18, fontWeight: '700', color: '#6C63FF' },
+    spinnerBlob: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#6C63FF", alignItems: "center", justifyContent: "center", shadowColor: "#6C63FF", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 },
+    processingTxt: { fontSize: 18, fontWeight: '800', color: '#6C63FF' },
 
-    resultCard: {
-        width: '100%', padding: 32, borderRadius: 32, alignItems: 'center', borderWidth: 2,
-        backgroundColor: '#FFF'
-    },
-    resultSuccess: { borderColor: '#81C784', backgroundColor: '#F1F8E9' },
-    resultFail: { borderColor: '#E57373', backgroundColor: '#FFEBEE' },
+    resultCardWrap: { width: "100%", position: "relative" },
+    resultShadow: { position: "absolute", bottom: -8, left: 6, right: 6, height: "100%", borderRadius: 32, opacity: 0.8 },
+    resultCard: { width: '100%', padding: 32, borderRadius: 32, alignItems: 'center', borderWidth: 2, borderColor: "rgba(255,255,255,0.4)", overflow: "hidden" },
+    gloss: { position: "absolute", top: 0, left: 0, right: 0, height: "50%" },
+    dotPattern: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.08, borderRadius: 32 },
+
     resultEmoji: { fontSize: 64, marginBottom: 12 },
-    resultTitle: { fontSize: 28, fontWeight: '900', color: '#1A1A1A', marginBottom: 12 },
-    resultFeedback: { fontSize: 16, color: '#555', textAlign: 'center', lineHeight: 24, marginBottom: 24 },
+    resultTitle: { fontSize: 32, fontWeight: '900', color: '#FFF', marginBottom: 12, textShadowColor: "rgba(0,0,0,0.3)", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 },
+    resultFeedback: { fontSize: 16, color: 'rgba(255,255,255,0.95)', textAlign: 'center', lineHeight: 24, marginBottom: 24, fontWeight: "600" },
 
-    ptsBadge: {
-        flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1A1A1A',
-        paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginBottom: 32,
-    },
-    ptsTxt: { color: '#FFD700', fontWeight: '800', fontSize: 16 },
+    ptsBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginBottom: 32 },
+    ptsTxt: { color: '#FFD700', fontWeight: '900', fontSize: 16 },
 
     actionRow: { flexDirection: 'row', gap: 16, width: '100%' },
-    actionBtnOutline: {
-        flex: 1, paddingVertical: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(0,0,0,0.1)',
-        alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
-    },
-    actionBtn: {
-        flex: 1, paddingVertical: 16, borderRadius: 16,
-        alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
-    },
-    actionBtnTxt: { fontSize: 16, fontWeight: '800' },
+    actionBtnOutline: { flex: 1, paddingVertical: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', backgroundColor: "rgba(255,255,255,0.1)", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+    actionBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "#FFF", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+    actionBtnTxt: { fontSize: 16, fontWeight: '900', color: "#000" },
     actionBtnTxtWhite: { fontSize: 16, fontWeight: '800', color: '#FFF' },
 });

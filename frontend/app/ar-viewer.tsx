@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import {
   ViroARSceneNavigator,
   ViroARScene,
@@ -8,7 +8,7 @@ import {
   ViroAmbientLight,
   ViroSpotLight,
   ViroNode
-} from '@viro-community/react-viro';
+} from '../components/ViroSafe';
 import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-react-native';
 
 const HeartSceneAR = (props: any) => {
@@ -82,6 +82,7 @@ export default function ARViewerScreen() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
       <ViroARSceneNavigator
         autofocus={true}
         initialScene={{
@@ -141,28 +142,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', zIndex: 10,
   },
   backBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#6C63FF',
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 2, borderColor: '#A855F7',
+    shadowColor: '#4C1D95', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 6
   },
   lockBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF8C00',
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 2, borderColor: '#FFD93D',
+    shadowColor: '#B85E00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 6
   },
-  lockBtnActive: { backgroundColor: 'rgba(230, 57, 70, 0.9)' },
-  backTxt: { color: '#fff', marginLeft: 8, fontSize: 16, fontWeight: 'bold' },
+  lockBtnActive: { backgroundColor: '#E63946', borderColor: '#FF6B6B', shadowColor: '#9D003F' },
+  backTxt: { color: '#fff', marginLeft: 8, fontSize: 16, fontWeight: '900' },
 
   hudContainer: {
-    position: 'absolute', bottom: 30, left: 20, right: 20,
-    backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 24, padding: 16, gap: 16,
+    position: 'absolute', bottom: 40, left: 20, right: 20,
+    backgroundColor: 'rgba(13, 0, 31, 0.85)', borderRadius: 28, padding: 20, gap: 16,
+    borderWidth: 2, borderColor: '#4A0099',
   },
   hudRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
   },
   hudBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)', padding: 12, borderRadius: 20,
-    width: 60, alignItems: 'center'
+    backgroundColor: '#00BFFF', padding: 14, borderRadius: 20,
+    width: 64, alignItems: 'center', borderWidth: 2, borderColor: '#43E8D8',
+    shadowColor: '#005599', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4
   },
   hudLabel: {
-    color: '#fff', fontSize: 16, fontWeight: '800', width: 60, textAlign: 'center'
+    color: '#FFD93D', fontSize: 16, fontWeight: '900', width: 60, textAlign: 'center'
   }
 });

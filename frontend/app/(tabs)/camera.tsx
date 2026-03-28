@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Animated,
 } from "react-native";
 import { CameraView, useCameraPermissions, CameraType } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SwitchCamera, Zap, ZapOff } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../../constants/app";
 import { api } from "../../services/api";
 
@@ -29,10 +31,26 @@ export default function CameraScreen() {
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
 
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isDetecting) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.1, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true })
+        ])
+      ).start();
+    } else {
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(1);
+    }
+  }, [isDetecting]);
+
   if (!permission) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color="#FFD93D" />
       </View>
     );
   }
@@ -40,12 +58,16 @@ export default function CameraScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.permTitle}>📸 Camera Access Needed</Text>
+        <Text style={styles.permEmoji}>📸</Text>
+        <Text style={styles.permTitle}>Camera Access Needed</Text>
         <Text style={styles.permText}>
-          We need your camera to detect objects and help you learn!
+          We need your camera to detect objects and help you learn new words!
         </Text>
-        <TouchableOpacity style={styles.permButton} onPress={requestPermission}>
-          <Text style={styles.permButtonText}>Allow Camera</Text>
+        <TouchableOpacity style={styles.permButtonWrap} onPress={requestPermission} activeOpacity={0.8}>
+           <View style={styles.permButtonShadow} />
+           <LinearGradient colors={["#A855F7", "#7C3AED"]} style={styles.permButton}>
+             <Text style={styles.permButtonText}>Allow Camera</Text>
+           </LinearGradient>
         </TouchableOpacity>
       </View>
     );
@@ -87,7 +109,6 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Camera as a flat layer — no children inside CameraView */}
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
@@ -95,28 +116,33 @@ export default function CameraScreen() {
         flash={flash ? "on" : "off"}
       />
 
-      {/* All UI overlays on top using absolute positioning */}
       <View style={styles.overlay}>
-        {/* Top controls */}
+        {/* Top Controls */}
         <View style={styles.topControls}>
           <TouchableOpacity
-            style={styles.controlButton}
+            style={styles.iconButtonWrap}
             onPress={() => setFlash(!flash)}
+            activeOpacity={0.7}
           >
-            {flash ? (
-              <Zap color="#FFD700" size={24} fill="#FFD700" />
-            ) : (
-              <ZapOff color="#FFFFFF" size={24} />
-            )}
+            <View style={styles.iconButtonShadow} />
+            <View style={styles.iconButton}>
+              {flash ? <Zap color="#FFD93D" size={24} fill="#FFD93D" /> : <ZapOff color="#FFFFFF" size={24} />}
+            </View>
           </TouchableOpacity>
 
-          <Text style={styles.cameraTitle}>Point at an object! 🎯</Text>
+          <View style={styles.cameraTitlePill}>
+            <Text style={styles.cameraTitleTxt}>Point at an object! 🎯</Text>
+          </View>
 
           <TouchableOpacity
-            style={styles.controlButton}
+            style={styles.iconButtonWrap}
             onPress={() => setFacing(facing === "back" ? "front" : "back")}
+            activeOpacity={0.7}
           >
-            <SwitchCamera color="#FFFFFF" size={24} />
+            <View style={styles.iconButtonShadow} />
+            <View style={styles.iconButton}>
+              <SwitchCamera color="#FFFFFF" size={24} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -126,39 +152,45 @@ export default function CameraScreen() {
              <TouchableOpacity
              key={lang.code}
              style={[
-               styles.langBadge,
-               selectedLang.code === lang.code && styles.langBadgeActive,
+               styles.langBadgeWrap,
+               selectedLang.code === lang.code && { transform: [{ scale: 1.1 }] }
              ]}
              onPress={() => setSelectedLang(lang)}
              activeOpacity={0.8}
            >
-             <Text style={styles.langEmoji}>{lang.emoji}</Text>
+             {selectedLang.code === lang.code && <View style={styles.langBadgeShadow} />}
+             <View style={[styles.langBadge, selectedLang.code === lang.code && styles.langBadgeActive]}>
+                <Text style={styles.langEmoji}>{lang.emoji}</Text>
+             </View>
            </TouchableOpacity>
          ))}
         </View>
 
-        {/* Camera frame guide */}
-        <View style={styles.frameGuide}>
+        {/* Camera Frame Guide */}
+        <Animated.View style={[styles.frameGuide, isDetecting && { transform: [{ scale: pulseAnim }], borderColor: "#FFD93D" }]}>
           <View style={[styles.corner, styles.topLeft]} />
           <View style={[styles.corner, styles.topRight]} />
           <View style={[styles.corner, styles.bottomLeft]} />
           <View style={[styles.corner, styles.bottomRight]} />
-        </View>
+        </Animated.View>
 
-        {/* Bottom controls */}
+        {/* Bottom Controls */}
         <View style={styles.bottomControls}>
           {isDetecting ? (
-            <View style={styles.detectingContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.detectingText}>🔍 Detecting...</Text>
+            <View style={styles.detectingBox}>
+               <ActivityIndicator size="large" color="#FFD93D" />
+               <Text style={styles.detectingText}>Scanning... 🔍</Text>
             </View>
           ) : (
             <TouchableOpacity
-              style={styles.captureButton}
+              style={styles.captureWrap}
               onPress={handleCapture}
-              activeOpacity={0.7}
+              activeOpacity={0.9}
             >
-              <View style={styles.captureInner} />
+              <View style={styles.captureShadow} />
+              <View style={styles.captureOuter}>
+                 <View style={styles.captureInner} />
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -168,144 +200,46 @@ export default function CameraScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.background,
-    padding: 32,
-  },
-  permTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  permText: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  permButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 16,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  permButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  topControls: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cameraTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  frameGuide: {
-    position: "absolute",
-    top: "25%",
-    left: "15%",
-    right: "15%",
-    bottom: "30%",
-  },
-  corner: {
-    position: "absolute",
-    width: 30,
-    height: 30,
-    borderColor: COLORS.accent,
-    borderWidth: 3,
-  },
-  topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 8 },
-  topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 8 },
-  bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 8 },
-  bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 8 },
-  bottomControls: {
-    position: "absolute",
-    bottom: 100,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
-  },
-  captureInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#FFFFFF",
-  },
-  detectingContainer: {
-    alignItems: "center",
-    gap: 12,
-  },
-  detectingText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  languageContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 16,
-    zIndex: 10,
-  },
-  langBadge: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  langBadgeActive: {
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderColor: COLORS.primary,
-  },
-  langEmoji: {
-    fontSize: 24,
-  },
+  container: { flex: 1, backgroundColor: "#000" },
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 1 },
+  
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D001F", padding: 32 },
+  permEmoji: { fontSize: 64, marginBottom: 16 },
+  permTitle: { fontSize: 28, fontWeight: "900", color: "#FFFFFF", marginBottom: 12, textAlign: "center" },
+  permText: { fontSize: 16, color: "rgba(255,255,255,0.8)", textAlign: "center", marginBottom: 32, lineHeight: 24, fontWeight: "600" },
+  permButtonWrap: { position: "relative", width: "80%" },
+  permButtonShadow: { position: "absolute", bottom: -6, left: 2, right: 2, height: "100%", backgroundColor: "#4C1D95", borderRadius: 24 },
+  permButton: { paddingVertical: 18, borderRadius: 24, alignItems: "center", borderWidth: 2, borderColor: "#A855F7" },
+  permButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "900", letterSpacing: 0.5 },
+
+  topControls: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 60, paddingHorizontal: 20 },
+  iconButtonWrap: { position: "relative", width: 44, height: 44 },
+  iconButtonShadow: { position: "absolute", bottom: -3, left: 1, right: 1, height: "100%", borderRadius: 22, backgroundColor: "rgba(0,0,0,0.5)" },
+  iconButton: { flex: 1, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.4)" },
+  
+  cameraTitlePill: { backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
+  cameraTitleTxt: { fontSize: 16, fontWeight: "800", color: "#FFFFFF", letterSpacing: 0.5 },
+
+  frameGuide: { position: "absolute", top: "25%", left: "15%", right: "15%", bottom: "30%" },
+  corner: { position: "absolute", width: 40, height: 40, borderColor: "#FFFFFF", borderWidth: 4, borderRadius: 12 },
+  topLeft: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
+  topRight: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+  bottomLeft: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
+  bottomRight: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
+
+  bottomControls: { position: "absolute", bottom: 60, left: 0, right: 0, alignItems: "center" },
+  captureWrap: { position: "relative", width: 84, height: 84 },
+  captureShadow: { position: "absolute", bottom: -6, left: 2, right: 2, height: "100%", borderRadius: 42, backgroundColor: "rgba(0,0,0,0.5)" },
+  captureOuter: { flex: 1, borderRadius: 42, backgroundColor: "rgba(255,255,255,0.3)", justifyContent: "center", alignItems: "center", borderWidth: 4, borderColor: "#FFFFFF" },
+  captureInner: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#FFFFFF" },
+
+  detectingBox: { backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 24, paddingVertical: 16, borderRadius: 24, alignItems: "center", gap: 8, borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
+  detectingText: { color: "#FFFFFF", fontSize: 18, fontWeight: "800", letterSpacing: 1 },
+
+  languageContainer: { flexDirection: "row", justifyContent: "center", gap: 14, marginTop: 24, zIndex: 10 },
+  langBadgeWrap: { position: "relative" },
+  langBadgeShadow: { position: "absolute", bottom: -4, left: 2, right: 2, height: "100%", borderRadius: 24, backgroundColor: "#C2006F" },
+  langBadge: { backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 24, borderWidth: 2, borderColor: "transparent" },
+  langBadgeActive: { backgroundColor: "#FFD93D", borderColor: "#FFFFFF" },
+  langEmoji: { fontSize: 26 },
 });

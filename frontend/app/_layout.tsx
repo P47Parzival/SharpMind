@@ -29,7 +29,7 @@ const SharpMindTheme = {
 export default function RootLayout() {
   return (
     <ThemeProvider value={SharpMindTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="finder"
@@ -42,6 +42,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="lingo-island"
           options={{ headerShown: false, presentation: 'fullScreenModal' }}
+        />
+        <Stack.Screen
+          name="ar-viewer"
+          options={{ headerShown: false }}
         />
       </Stack>
       <StatusBar style="auto" />
