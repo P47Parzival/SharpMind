@@ -47,6 +47,10 @@ export default function RootLayout() {
           name="ar-viewer"
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="ar-models"
+          options={{ headerShown: false }}
+        />
       </Stack>
       <StatusBar style="auto" />
       <Toast />

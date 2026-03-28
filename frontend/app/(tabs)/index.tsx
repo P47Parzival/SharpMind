@@ -377,34 +377,6 @@ export default function HomeScreen() {
             </Animated.View>
           </View>
 
-          {/* ── Stat Badges ── */}
-          <View style={styles.statsRow}>
-            <StatBadge
-              emoji="⭐"
-              value={stats.totalPoints}
-              label="Points"
-              bgColor="#FF8C00"
-              borderColor="#CC5500"
-              delay={80}
-            />
-            <StatBadge
-              emoji="🔥"
-              value={stats.streakCount}
-              label="Streak"
-              bgColor="#E5007F"
-              borderColor="#A30060"
-              delay={160}
-            />
-            <StatBadge
-              emoji="🔍"
-              value={stats.objectsDetected}
-              label="Scanned"
-              bgColor="#009DAA"
-              borderColor="#007080"
-              delay={240}
-            />
-          </View>
-
         </Animated.View>
       </View>
 
@@ -419,6 +391,34 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Stat Badges (scrolls with content) ── */}
+        <View style={styles.statsRowScroll}>
+          <StatBadge
+            emoji="⭐"
+            value={stats.totalPoints}
+            label="Points"
+            bgColor="#FF8C00"
+            borderColor="#CC5500"
+            delay={80}
+          />
+          <StatBadge
+            emoji="🔥"
+            value={stats.streakCount}
+            label="Streak"
+            bgColor="#E5007F"
+            borderColor="#A30060"
+            delay={160}
+          />
+          <StatBadge
+            emoji="🔍"
+            value={stats.objectsDetected}
+            label="Scanned"
+            bgColor="#009DAA"
+            borderColor="#007080"
+            delay={240}
+          />
+        </View>
+
         {/* Section title */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>🎮 Pick Your Adventure</Text>
@@ -484,7 +484,7 @@ export default function HomeScreen() {
             title="3D Magic"
             gradientColors={["#43E8D8", "#00BFFF", "#0077CC"]}
             shadowColor="#005599"
-            onPress={() => router.push("/ar-viewer")}
+            onPress={() => router.push("/ar-models")}
             delay={440}
           />
         </View>
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
   },
   levelTxt: { fontSize: 10, fontWeight: "900", color: "#FFF" },
 
-  statsRow: { flexDirection: "row", gap: 10 },
+  statsRowScroll: { flexDirection: "row", gap: 10, marginBottom: 18 },
 
   curveContainer: { height: 28, overflow: "visible", zIndex: 5 },
   curveBg: {

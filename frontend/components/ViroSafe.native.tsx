@@ -31,3 +31,4 @@ export const Viro3DObject = isExpoGo || !realViro ? () => null : realViro.Viro3D
 export const ViroAmbientLight = isExpoGo || !realViro ? () => null : realViro.ViroAmbientLight;
 export const ViroSpotLight = isExpoGo || !realViro ? () => null : realViro.ViroSpotLight;
 export const ViroNode = isExpoGo || !realViro ? ({ children }: any) => <>{children}</> : realViro.ViroNode;
+export const ViroSkyBox = isExpoGo || !realViro ? () => null : realViro.ViroSkyBox;

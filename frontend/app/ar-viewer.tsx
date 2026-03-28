@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import {
   ViroARSceneNavigator,
   ViroARScene,
   Viro3DObject,
   ViroAmbientLight,
   ViroSpotLight,
-  ViroNode
+  ViroNode,
+  ViroSkyBox
 } from '../components/ViroSafe';
-import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut } from 'lucide-react-native';
+import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut, Moon, Sun, ArrowUp, ArrowDown } from 'lucide-react-native';
 
 const HeartSceneAR = (props: any) => {
-  const { isLocked, controlRotation, controlScale } = props.sceneNavigator.viroAppProps;
+  const { isLocked, controlRotation, controlTilt, controlScale, modelSource, isBlackout } = props.sceneNavigator.viroAppProps;
 
   // Base transforms mixed with 2D controls
   const [dragRotation, setDragRotation] = useState<[number, number, number]>([0, 0, 0]);
@@ -42,6 +43,7 @@ const HeartSceneAR = (props: any) => {
 
   return (
     <ViroARScene>
+      {isBlackout && <ViroSkyBox color="#000000" />}
       <ViroAmbientLight color="#ffffff" intensity={300} />
       <ViroSpotLight
         innerAngle={5}
@@ -58,14 +60,14 @@ const HeartSceneAR = (props: any) => {
         onDrag={() => { }}
         ignoreEventHandling={isLocked}
         scale={[dragScale[0] * controlScale, dragScale[1] * controlScale, dragScale[2] * controlScale]}
-        rotation={[dragRotation[0], dragRotation[1] + controlRotation, dragRotation[2]]}
+        rotation={[dragRotation[0] + controlTilt, dragRotation[1] + controlRotation, dragRotation[2]]}
         // @ts-ignore
         onRotation={onRotate}
         // @ts-ignore
         onPinch={onPinch}
       >
         <Viro3DObject
-          source={require("../glbfiles/upper_body_anatomy.glb")}
+          source={modelSource}
           position={[0, 0, 0]}
           type="GLB"
         />
@@ -76,8 +78,22 @@ const HeartSceneAR = (props: any) => {
 
 export default function ARViewerScreen() {
   const router = useRouter();
+  const { model } = useLocalSearchParams();
+
+  // Select matching GLB. Defaults to Heart if nothing passed or unknown id is received.
+  const modelKey = typeof model === 'string' ? model : 'heart';
+  const modelSourceMap: Record<string, any> = {
+    heart: require("../glbfiles/realistic_human_heart.glb"),
+    body: require("../glbfiles/upper_body_anatomy.glb"),
+    'full-body': require("../glbfiles/male_full_body_ecorche.glb"),
+    earth: require("../glbfiles/earth.glb"),
+  };
+  const modelSource = modelSourceMap[modelKey] ?? modelSourceMap.heart;
+
   const [isLocked, setIsLocked] = useState(false);
+  const [isBlackout, setIsBlackout] = useState(false);
   const [controlRotation, setControlRotation] = useState(0);
+  const [controlTilt, setControlTilt] = useState(0);
   const [controlScale, setControlScale] = useState(1);
 
   return (
@@ -89,7 +105,7 @@ export default function ARViewerScreen() {
           // @ts-ignore
           scene: HeartSceneAR,
         }}
-        viroAppProps={{ isLocked, controlRotation, controlScale }}
+        viroAppProps={{ isLocked, controlRotation, controlTilt, controlScale, modelSource, isBlackout }}
         style={styles.arView}
       />
 
@@ -99,13 +115,22 @@ export default function ARViewerScreen() {
           <Text style={styles.backTxt}>Exit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.lockBtn, isLocked && styles.lockBtnActive]}
-          onPress={() => setIsLocked(!isLocked)}
-        >
-          {isLocked ? <Lock color="#fff" size={20} /> : <Unlock color="#fff" size={20} />}
-          <Text style={styles.backTxt}>{isLocked ? 'Locked' : 'Unlocked'}</Text>
-        </TouchableOpacity>
+        <View style={styles.actionsGroup}>
+          <TouchableOpacity
+            style={[styles.lockBtn, isBlackout && styles.lockBtnActive]}
+            onPress={() => setIsBlackout(!isBlackout)}
+          >
+            {isBlackout ? <Moon color="#fff" size={20} /> : <Sun color="#fff" size={20} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.lockBtn, isLocked && styles.lockBtnActive]}
+            onPress={() => setIsLocked(!isLocked)}
+          >
+            {isLocked ? <Lock color="#fff" size={20} /> : <Unlock color="#fff" size={20} />}
+            <Text style={styles.backTxt}>{isLocked ? 'Locked' : 'Unlocked'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 2D On-Screen Controls for Small Phones */}
@@ -129,6 +154,16 @@ export default function ARViewerScreen() {
             <RotateCw color="#fff" size={24} />
           </TouchableOpacity>
         </View>
+
+        <View style={styles.hudRow}>
+          <TouchableOpacity style={styles.hudBtn} onPress={() => setControlTilt(t => Math.min(180, t + 10))}>
+            <ArrowUp color="#fff" size={24} />
+          </TouchableOpacity>
+          <Text style={styles.hudLabel}>Tilt</Text>
+          <TouchableOpacity style={styles.hudBtn} onPress={() => setControlTilt(t => Math.max(-180, t - 10))}>
+            <ArrowDown color="#fff" size={24} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -138,9 +173,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   arView: { flex: 1 },
   header: {
-    position: 'absolute', top: 50, left: 20, right: 20,
+    position: 'absolute', top: 50, left: 16, right: 16,
     flexDirection: 'row', justifyContent: 'space-between', zIndex: 10,
   },
+  actionsGroup: { flexDirection: 'row', gap: 8 },
   backBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#6C63FF',
     paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 2, borderColor: '#A855F7',
