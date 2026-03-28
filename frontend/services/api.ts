@@ -158,4 +158,34 @@ export const api = {
       new_total: number;
     }>;
   },
+
+  /**
+   * Fetch a downloadable 3D model from Sketchfab by search query.
+   */
+  async fetchSketchfabModel(query: string) {
+    const response = await fetch(`${API_BASE_URL}/models/sketchfab/fetch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      let detail = `Model fetch failed: ${response.status}`;
+      try {
+        const errJson = await response.json();
+        if (errJson?.detail) detail = errJson.detail;
+      } catch {
+        // Keep fallback detail
+      }
+      throw new Error(detail);
+    }
+
+    return response.json() as Promise<{
+      source: string;
+      model_name: string;
+      model_type: string;
+      model_url: string;
+      uid: string;
+    }>;
+  },
 };

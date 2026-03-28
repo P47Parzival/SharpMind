@@ -14,7 +14,7 @@ import { ArrowLeft, Lock, Unlock, RotateCcw, RotateCw, ZoomIn, ZoomOut, Moon, Su
 import { speakText, stopSpeaking } from '../services/audio';
 
 const HeartSceneAR = (props: any) => {
-  const { isLocked, controlRotation, controlTilt, controlScale, modelSource, isBlackout } = props.sceneNavigator.viroAppProps;
+  const { isLocked, controlRotation, controlTilt, controlScale, modelSource, modelType, isBlackout } = props.sceneNavigator.viroAppProps;
 
   // Base transforms mixed with 2D controls
   const [dragRotation, setDragRotation] = useState<[number, number, number]>([0, 0, 0]);
@@ -70,7 +70,7 @@ const HeartSceneAR = (props: any) => {
         <Viro3DObject
           source={modelSource}
           position={[0, 0, 0]}
-          type="GLB"
+          type={modelType}
         />
       </ViroNode>
     </ViroARScene>
@@ -84,7 +84,7 @@ const SPEECH_LANGUAGES = [
 
 export default function ARViewerScreen() {
   const router = useRouter();
-  const { model } = useLocalSearchParams();
+  const { model, remoteModelUrl, remoteModelName, remoteModelType } = useLocalSearchParams();
 
   // Select matching GLB. Defaults to Heart if nothing passed or unknown id is received.
   const modelKey = typeof model === 'string' ? model : 'heart';
@@ -106,7 +106,16 @@ export default function ARViewerScreen() {
     'full-body': 'यह पूरे शरीर की मांसपेशियों का मॉडल है। इससे आप समझ सकते हैं कि हमारा शरीर कैसे बना है और कैसे चलता है।',
     earth: 'यह पृथ्वी ग्रह का मॉडल है। पृथ्वी का अधिकतर भाग पानी से ढका है और यही एक ज्ञात ग्रह है जहां जीवन संभव है।',
   };
-  const modelSource = modelSourceMap[modelKey] ?? modelSourceMap.heart;
+  const isRemoteModel = typeof remoteModelUrl === 'string' && remoteModelUrl.length > 0;
+  const modelSource = isRemoteModel
+    ? { uri: remoteModelUrl as string }
+    : (modelSourceMap[modelKey] ?? modelSourceMap.heart);
+  const modelType = isRemoteModel
+    ? (typeof remoteModelType === 'string' ? remoteModelType : 'GLTF')
+    : 'GLB';
+  const remoteLabel = typeof remoteModelName === 'string' && remoteModelName.trim().length > 0
+    ? remoteModelName.trim()
+    : 'this downloaded 3D model';
   const modelNarration = modelNarrationMap[modelKey] ?? modelNarrationMap.heart;
   const modelNarrationHindi = modelNarrationHindiMap[modelKey] ?? modelNarrationHindiMap.heart;
 
@@ -126,7 +135,11 @@ export default function ARViewerScreen() {
   }, [modelKey]);
 
   const handleSpeak = (languageCode: string) => {
-    const narration = languageCode === 'hi-IN' ? modelNarrationHindi : modelNarration;
+    const narration = isRemoteModel
+      ? (languageCode === 'hi-IN'
+          ? `यह ${remoteLabel} मॉडल है। आप इसे घुमाकर और ज़ूम करके अच्छी तरह देख सकते हैं।`
+          : `This is ${remoteLabel}. You can rotate and zoom to explore it in detail.`)
+      : (languageCode === 'hi-IN' ? modelNarrationHindi : modelNarration);
     speakText(narration, languageCode);
     setShowLanguagePicker(false);
   };
@@ -140,7 +153,7 @@ export default function ARViewerScreen() {
           // @ts-ignore
           scene: HeartSceneAR,
         }}
-        viroAppProps={{ isLocked, controlRotation, controlTilt, controlScale, modelSource, isBlackout }}
+        viroAppProps={{ isLocked, controlRotation, controlTilt, controlScale, modelSource, modelType, isBlackout }}
         style={styles.arView}
       />
 

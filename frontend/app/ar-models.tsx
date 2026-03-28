@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft } from 'lucide-react-native';
+import { api } from '../services/api';
 
 const MODELS = [
   {
@@ -85,6 +86,34 @@ function ModelCard({ model, onPress, delay }: { model: typeof MODELS[0]; onPress
 export default function ARModelsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [remoteQuery, setRemoteQuery] = useState('');
+  const [isFetchingRemote, setIsFetchingRemote] = useState(false);
+
+  const handleFetchRemoteModel = async () => {
+    const query = remoteQuery.trim();
+    if (query.length < 2) {
+      Alert.alert('Enter model name', 'Please type at least 2 letters to search Sketchfab.');
+      return;
+    }
+
+    setIsFetchingRemote(true);
+    try {
+      const result = await api.fetchSketchfabModel(query);
+      router.push({
+        pathname: '/ar-viewer',
+        params: {
+          model: 'remote',
+          remoteModelUrl: result.model_url,
+          remoteModelName: result.model_name,
+          remoteModelType: result.model_type,
+        },
+      });
+    } catch (error: any) {
+      Alert.alert('Could not load model', error?.message || 'Please try another search term.');
+    } finally {
+      setIsFetchingRemote(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -114,6 +143,28 @@ export default function ARModelsScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.remoteCard}>
+          <Text style={styles.remoteTitle}>Search More Models</Text>
+          <Text style={styles.remoteHint}>Type any model name and we will fetch a downloadable one from Sketchfab.</Text>
+          <View style={styles.remoteRow}> 
+            <TextInput
+              value={remoteQuery}
+              onChangeText={setRemoteQuery}
+              placeholder="e.g. tiger, airplane, dinosaur"
+              placeholderTextColor="#8B6AAE"
+              style={styles.remoteInput}
+              editable={!isFetchingRemote}
+            />
+            <TouchableOpacity
+              style={[styles.remoteBtn, isFetchingRemote && styles.remoteBtnDisabled]}
+              onPress={handleFetchRemoteModel}
+              disabled={isFetchingRemote}
+            >
+              {isFetchingRemote ? <ActivityIndicator color="#fff" /> : <Text style={styles.remoteBtnText}>Load</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.levelsContainer}>
           {MODELS.map((model, idx) => (
             <ModelCard
@@ -143,6 +194,41 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#F0EBF8" },
   scrollContent: { paddingHorizontal: 20, paddingTop: 30, paddingBottom: 60 },
   levelsContainer: { gap: 4 },
+
+  remoteCard: {
+    marginBottom: 20,
+    backgroundColor: '#ECE4FB',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#C8B1EE',
+    padding: 14,
+  },
+  remoteTitle: { fontSize: 18, fontWeight: '900', color: '#3A0A69', marginBottom: 4 },
+  remoteHint: { fontSize: 13, color: '#5C3A88', fontWeight: '600', marginBottom: 10 },
+  remoteRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  remoteInput: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#C8B1EE',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#2D0060',
+    fontWeight: '700',
+  },
+  remoteBtn: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 2,
+    borderColor: '#A855F7',
+    minWidth: 68,
+    alignItems: 'center',
+  },
+  remoteBtnDisabled: { opacity: 0.75 },
+  remoteBtnText: { color: '#fff', fontWeight: '900', fontSize: 14 },
 
   cardWrapper: { marginBottom: 22, position: "relative" },
   cardShadow: { position: "absolute", bottom: -6, left: 4, right: 4, height: "100%", borderRadius: 28, opacity: 0.8 },

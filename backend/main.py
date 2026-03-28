@@ -1,9 +1,15 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from database import engine, SessionLocal
 import models
 
-from routers import detection, finder, users, vocab
+from routers import detection, finder, users, vocab, models as model_router
+
+DOWNLOADS_DIR = Path(__file__).resolve().parent / "downloaded_models"
+DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
@@ -38,11 +44,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/downloaded-models", StaticFiles(directory=str(DOWNLOADS_DIR)), name="downloaded-models")
+
 # Include routers
 app.include_router(detection.router)
 app.include_router(finder.router)
 app.include_router(users.router)
 app.include_router(vocab.router)
+app.include_router(model_router.router)
 
 @app.get("/")
 def read_root():
@@ -56,5 +65,6 @@ def read_root():
             "create_user": "POST /users/",
             "user_stats": "GET /users/{id}/stats",
             "vocab_pronounce": "POST /vocab/pronounce",
+            "sketchfab_fetch": "POST /models/sketchfab/fetch",
         },
     }
