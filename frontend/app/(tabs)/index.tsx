@@ -328,8 +328,12 @@ export default function HomeScreen() {
       {/* ── Subtle radial glow at center-top ── */}
       <View style={styles.radialGlow} />
 
-      {/* ── Header ── */}
-      <View style={styles.headerOuter}>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ── */}
+        <View style={styles.headerOuter}>
         {/* Background blobs */}
         <GlowBlob color="#FF4DB8" size={180} style={{ top: -50, right: -50 }} duration={3000} />
         <GlowBlob color="#FFD93D" size={100} style={{ top: 40, left: -20 }} duration={2600} />
@@ -414,11 +418,7 @@ export default function HomeScreen() {
       </View>
 
       {/* ── Scrollable Content ── */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={[styles.scroll, styles.scrollContent]}>
         {/* Section title */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>🎮 Pick Your Adventure</Text>
@@ -522,6 +522,9 @@ export default function HomeScreen() {
         </LinearGradient>
 
         <View style={{ height: 120 }} />
+        {/* Deep bounce extension area */}
+        <View style={{ position: "absolute", bottom: -800, left: 0, right: 0, height: 800, backgroundColor: "#F0EBF8" }} />
+      </View>
       </ScrollView>
     </View>
   );
