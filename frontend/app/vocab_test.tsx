@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Audio } from 'expo-av';
@@ -162,7 +162,7 @@ export default function VocabTestScreen() {
                 <View style={styles.curveBg} />
             </View>
 
-            <View style={styles.content}>
+            <ScrollView contentContainerStyle={styles.contentScroll} showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: "#F0EBF8" }}>
                 <View style={styles.micArea}>
                     {isProcessing ? (
                         <View style={styles.processingBox}>
@@ -230,7 +230,7 @@ export default function VocabTestScreen() {
                         </View>
                     )}
                 </View>
-            </View>
+            </ScrollView>
         </View>
     );
 }
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     curveContainer: { height: 28, overflow: "visible", zIndex: 5 },
     curveBg: { position: "absolute", bottom: 0, left: -20, right: -20, height: 60, backgroundColor: "#F0EBF8", borderTopLeftRadius: 36, borderTopRightRadius: 36 },
 
-    content: { flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: "#F0EBF8" },
+    contentScroll: { flexGrow: 1, padding: 24, alignItems: 'center', justifyContent: 'center' },
 
     micArea: { alignItems: 'center', justifyContent: 'center', width: '100%' },
     micButtonWrap: { position: "relative", width: 140, height: 140, marginBottom: 20, zIndex: 10 },
@@ -265,20 +265,20 @@ const styles = StyleSheet.create({
 
     resultCardWrap: { width: "100%", position: "relative" },
     resultShadow: { position: "absolute", bottom: -8, left: 6, right: 6, height: "100%", borderRadius: 32, opacity: 0.8 },
-    resultCard: { width: '100%', padding: 32, borderRadius: 32, alignItems: 'center', borderWidth: 2, borderColor: "rgba(255,255,255,0.4)", overflow: "hidden" },
+    resultCard: { width: '100%', padding: 20, borderRadius: 32, alignItems: 'center', borderWidth: 2, borderColor: "rgba(255,255,255,0.4)", overflow: "hidden" },
     gloss: { position: "absolute", top: 0, left: 0, right: 0, height: "50%" },
     dotPattern: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.08, borderRadius: 32 },
 
-    resultEmoji: { fontSize: 64, marginBottom: 12 },
-    resultTitle: { fontSize: 32, fontWeight: '900', color: '#FFF', marginBottom: 12, textShadowColor: "rgba(0,0,0,0.3)", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 },
-    resultFeedback: { fontSize: 16, color: 'rgba(255,255,255,0.95)', textAlign: 'center', lineHeight: 24, marginBottom: 24, fontWeight: "600" },
+    resultEmoji: { fontSize: 54, marginBottom: 12 },
+    resultTitle: { fontSize: 26, fontWeight: '900', color: '#FFF', marginBottom: 8, textShadowColor: "rgba(0,0,0,0.3)", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 },
+    resultFeedback: { fontSize: 15, color: 'rgba(255,255,255,0.95)', textAlign: 'center', lineHeight: 22, marginBottom: 16, fontWeight: "600" },
 
-    ptsBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginBottom: 32 },
-    ptsTxt: { color: '#FFD700', fontWeight: '900', fontSize: 16 },
+    ptsBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, marginBottom: 20 },
+    ptsTxt: { color: '#FFD700', fontWeight: '900', fontSize: 15 },
 
-    actionRow: { flexDirection: 'row', gap: 16, width: '100%' },
-    actionBtnOutline: { flex: 1, paddingVertical: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', backgroundColor: "rgba(255,255,255,0.1)", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-    actionBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "#FFF", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-    actionBtnTxt: { fontSize: 16, fontWeight: '900', color: "#000" },
-    actionBtnTxtWhite: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+    actionRow: { flexDirection: 'row', gap: 10, width: '100%' },
+    actionBtnOutline: { flex: 1, paddingVertical: 14, paddingHorizontal: 4, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', backgroundColor: "rgba(255,255,255,0.1)", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+    actionBtn: { flex: 1, paddingVertical: 14, paddingHorizontal: 4, borderRadius: 16, backgroundColor: "#FFF", alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+    actionBtnTxt: { fontSize: 13, fontWeight: '900', color: "#000" },
+    actionBtnTxtWhite: { fontSize: 13, fontWeight: '800', color: '#FFF' },
 });

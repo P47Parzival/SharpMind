@@ -394,6 +394,7 @@ export default function ProfileScreen() {
 
       <View style={styles.radialGlow} />
 
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.headerOuter}>
         <GlowBlob color="#FF4DB8" size={180} style={{ top: -50, right: -50 }} duration={3000} />
@@ -434,11 +435,7 @@ export default function ProfileScreen() {
         <View style={styles.curveBg} />
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={[styles.scroll, styles.scrollContent]}>
         {loading ? (
           <ActivityIndicator size="large" color="#7B1FD4" style={{ marginTop: 40 }} />
         ) : (
@@ -533,6 +530,9 @@ export default function ProfileScreen() {
         )}
 
         <View style={{ height: 120 }} />
+      </View>
+      {/* Deep bounce extension area */}
+      <View style={{ position: "absolute", bottom: -800, left: 0, right: 0, height: 800, backgroundColor: "#F0EBF8" }} />
       </ScrollView>
     </View>
   );
